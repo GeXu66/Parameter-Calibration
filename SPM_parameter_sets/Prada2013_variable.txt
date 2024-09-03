@@ -1,0 +1,591 @@
+SPMe model variables:
+	- Time
+	- Time [s]
+	- Time [min]
+	- Time [h]
+	- x
+	- x [m]
+	- x_n
+	- x_n [m]
+	- x_s
+	- x_s [m]
+	- x_p
+	- x_p [m]
+	- Sum of electrolyte reaction source terms
+	- Sum of positive electrode electrolyte reaction source terms
+	- Sum of x-averaged positive electrode electrolyte reaction source terms
+	- Sum of interfacial current densities
+	- Sum of positive electrode interfacial current densities
+	- Sum of x-averaged positive electrode interfacial current densities
+	- Sum of negative electrode electrolyte reaction source terms
+	- Sum of x-averaged negative electrode electrolyte reaction source terms
+	- Sum of negative electrode interfacial current densities
+	- Sum of x-averaged negative electrode interfacial current densities
+	- r_p
+	- r_p [m]
+	- r_n
+	- r_n [m]
+	- Current density variable
+	- Total current density
+	- Total current density [A.m-2]
+	- Current [A]
+	- C-rate
+	- Discharge capacity [A.h]
+	- Porosity
+	- Separator porosity
+	- Positive electrode porosity
+	- X-averaged separator porosity
+	- X-averaged positive electrode porosity
+	- Negative electrode porosity
+	- X-averaged negative electrode porosity
+	- Leading-order porosity
+	- Leading-order separator porosity
+	- Leading-order positive electrode porosity
+	- Leading-order x-averaged separator porosity
+	- Leading-order x-averaged positive electrode porosity
+	- Leading-order negative electrode porosity
+	- Leading-order x-averaged negative electrode porosity
+	- Porosity change
+	- Separator porosity change
+	- Positive electrode porosity change
+	- X-averaged separator porosity change
+	- X-averaged positive electrode porosity change
+	- Negative electrode porosity change
+	- X-averaged negative electrode porosity change
+	- Leading-order x-averaged separator porosity change
+	- Leading-order x-averaged positive electrode porosity change
+	- Leading-order x-averaged negative electrode porosity change
+	- Negative electrode interface utilisation variable
+	- X-averaged negative electrode interface utilisation variable
+	- Negative electrode interface utilisation
+	- X-averaged negative electrode interface utilisation
+	- Positive electrode interface utilisation variable
+	- X-averaged positive electrode interface utilisation variable
+	- Positive electrode interface utilisation
+	- X-averaged positive electrode interface utilisation
+	- Negative electrode active material volume fraction
+	- X-averaged negative electrode active material volume fraction
+	- Negative electrode capacity [A.h]
+	- Negative particle radius
+	- Negative particle radius [m]
+	- Negative electrode surface area to volume ratio
+	- Negative electrode surface area to volume ratio [m-1]
+	- X-averaged negative electrode surface area to volume ratio
+	- X-averaged negative electrode surface area to volume ratio [m-1]
+	- Negative electrode active material volume fraction change
+	- X-averaged negative electrode active material volume fraction change
+	- Positive electrode active material volume fraction
+	- X-averaged positive electrode active material volume fraction
+	- Positive electrode capacity [A.h]
+	- Positive particle radius
+	- Positive particle radius [m]
+	- Positive electrode surface area to volume ratio
+	- Positive electrode surface area to volume ratio [m-1]
+	- X-averaged positive electrode surface area to volume ratio
+	- X-averaged positive electrode surface area to volume ratio [m-1]
+	- Positive electrode active material volume fraction change
+	- X-averaged positive electrode active material volume fraction change
+	- Positive electrode volume-averaged velocity
+	- Positive electrode volume-averaged velocity [m.s-1]
+	- Negative electrode volume-averaged velocity
+	- Negative electrode volume-averaged velocity [m.s-1]
+	- Positive electrode volume-averaged acceleration
+	- Positive electrode volume-averaged acceleration [m.s-1]
+	- X-averaged positive electrode volume-averaged acceleration
+	- X-averaged positive electrode volume-averaged acceleration [m.s-1]
+	- Negative electrode volume-averaged acceleration
+	- Negative electrode volume-averaged acceleration [m.s-1]
+	- X-averaged negative electrode volume-averaged acceleration
+	- X-averaged negative electrode volume-averaged acceleration [m.s-1]
+	- Positive electrode pressure
+	- X-averaged positive electrode pressure
+	- Negative electrode pressure
+	- X-averaged negative electrode pressure
+	- Separator pressure
+	- X-averaged separator pressure
+	- Separator transverse volume-averaged velocity
+	- Positive electrode transverse volume-averaged velocity
+	- Separator transverse volume-averaged velocity [m.s-2]
+	- Positive electrode transverse volume-averaged velocity [m.s-2]
+	- X-averaged separator transverse volume-averaged velocity
+	- X-averaged positive electrode transverse volume-averaged velocity
+	- X-averaged separator transverse volume-averaged velocity [m.s-2]
+	- X-averaged positive electrode transverse volume-averaged velocity [m.s-2]
+	- Transverse volume-averaged velocity
+	- Transverse volume-averaged velocity [m.s-2]
+	- Negative electrode transverse volume-averaged velocity
+	- Negative electrode transverse volume-averaged velocity [m.s-2]
+	- X-averaged negative electrode transverse volume-averaged velocity
+	- X-averaged negative electrode transverse volume-averaged velocity [m.s-2]
+	- Separator transverse volume-averaged acceleration
+	- Positive electrode transverse volume-averaged acceleration
+	- Separator transverse volume-averaged acceleration [m.s-2]
+	- Positive electrode transverse volume-averaged acceleration [m.s-2]
+	- X-averaged separator transverse volume-averaged acceleration
+	- X-averaged positive electrode transverse volume-averaged acceleration
+	- X-averaged separator transverse volume-averaged acceleration [m.s-2]
+	- X-averaged positive electrode transverse volume-averaged acceleration [m.s-2]
+	- Transverse volume-averaged acceleration
+	- Transverse volume-averaged acceleration [m.s-2]
+	- Negative electrode transverse volume-averaged acceleration
+	- Negative electrode transverse volume-averaged acceleration [m.s-2]
+	- X-averaged negative electrode transverse volume-averaged acceleration
+	- X-averaged negative electrode transverse volume-averaged acceleration [m.s-2]
+	- Negative particle concentration
+	- Negative particle concentration [mol.m-3]
+	- X-averaged negative particle concentration
+	- X-averaged negative particle concentration [mol.m-3]
+	- R-averaged negative particle concentration
+	- R-averaged negative particle concentration [mol.m-3]
+	- Average negative particle concentration
+	- Average negative particle concentration [mol.m-3]
+	- Negative particle surface concentration
+	- Negative particle surface concentration [mol.m-3]
+	- X-averaged negative particle surface concentration
+	- X-averaged negative particle surface concentration [mol.m-3]
+	- Negative electrode extent of lithiation
+	- X-averaged negative electrode extent of lithiation
+	- Minimum negative particle concentration
+	- Maximum negative particle concentration
+	- Minimum negative particle concentration [mol.m-3]
+	- Maximum negative particle concentration [mol.m-3]
+	- Minimum negative particle surface concentration
+	- Maximum negative particle surface concentration
+	- Minimum negative particle surface concentration [mol.m-3]
+	- Maximum negative particle surface concentration [mol.m-3]
+	- Positive particle concentration
+	- Positive particle concentration [mol.m-3]
+	- X-averaged positive particle concentration
+	- X-averaged positive particle concentration [mol.m-3]
+	- R-averaged positive particle concentration
+	- R-averaged positive particle concentration [mol.m-3]
+	- Average positive particle concentration
+	- Average positive particle concentration [mol.m-3]
+	- Positive particle surface concentration
+	- Positive particle surface concentration [mol.m-3]
+	- X-averaged positive particle surface concentration
+	- X-averaged positive particle surface concentration [mol.m-3]
+	- Positive electrode extent of lithiation
+	- X-averaged positive electrode extent of lithiation
+	- Minimum positive particle concentration
+	- Maximum positive particle concentration
+	- Minimum positive particle concentration [mol.m-3]
+	- Maximum positive particle concentration [mol.m-3]
+	- Minimum positive particle surface concentration
+	- Maximum positive particle surface concentration
+	- Minimum positive particle surface concentration [mol.m-3]
+	- Maximum positive particle surface concentration [mol.m-3]
+	- Porosity times concentration
+	- Separator porosity times concentration
+	- Positive electrode porosity times concentration
+	- Negative electrode porosity times concentration
+	- Negative current collector temperature
+	- Negative current collector temperature [K]
+	- X-averaged negative electrode temperature
+	- X-averaged negative electrode temperature [K]
+	- Negative electrode temperature
+	- Negative electrode temperature [K]
+	- X-averaged separator temperature
+	- X-averaged separator temperature [K]
+	- Separator temperature
+	- Separator temperature [K]
+	- X-averaged positive electrode temperature
+	- X-averaged positive electrode temperature [K]
+	- Positive electrode temperature
+	- Positive electrode temperature [K]
+	- Positive current collector temperature
+	- Positive current collector temperature [K]
+	- Cell temperature
+	- Cell temperature [K]
+	- X-averaged cell temperature
+	- X-averaged cell temperature [K]
+	- Volume-averaged cell temperature
+	- Volume-averaged cell temperature [K]
+	- Ambient temperature [K]
+	- Ambient temperature
+	- Inner SEI thickness
+	- Inner SEI thickness [m]
+	- Outer SEI thickness
+	- Outer SEI thickness [m]
+	- X-averaged inner SEI thickness
+	- X-averaged inner SEI thickness [m]
+	- X-averaged outer SEI thickness
+	- X-averaged outer SEI thickness [m]
+	- SEI thickness
+	- SEI thickness [m]
+	- Total SEI thickness
+	- Total SEI thickness [m]
+	- X-averaged SEI thickness
+	- X-averaged SEI thickness [m]
+	- X-averaged total SEI thickness
+	- X-averaged total SEI thickness [m]
+	- X-averaged negative electrode resistance [Ohm.m2]
+	- Inner SEI concentration [mol.m-3]
+	- X-averaged inner SEI concentration [mol.m-3]
+	- Outer SEI concentration [mol.m-3]
+	- X-averaged outer SEI concentration [mol.m-3]
+	- SEI concentration [mol.m-3]
+	- X-averaged SEI concentration [mol.m-3]
+	- Loss of lithium to SEI [mol]
+	- Loss of capacity to SEI [A.h]
+	- Inner SEI interfacial current density
+	- Inner SEI interfacial current density [A.m-2]
+	- X-averaged inner SEI interfacial current density
+	- X-averaged inner SEI interfacial current density [A.m-2]
+	- Outer SEI interfacial current density
+	- Outer SEI interfacial current density [A.m-2]
+	- X-averaged outer SEI interfacial current density
+	- X-averaged outer SEI interfacial current density [A.m-2]
+	- SEI interfacial current density
+	- SEI interfacial current density [A.m-2]
+	- X-averaged SEI interfacial current density
+	- X-averaged SEI interfacial current density [A.m-2]
+	- Lithium plating concentration
+	- Lithium plating concentration [mol.m-3]
+	- X-averaged lithium plating concentration
+	- X-averaged lithium plating concentration [mol.m-3]
+	- Lithium plating thickness
+	- Lithium plating thickness [m]
+	- X-averaged lithium plating thickness [m]
+	- Loss of lithium to lithium plating [mol]
+	- Loss of capacity to lithium plating [A.h]
+	- Lithium plating interfacial current density
+	- Lithium plating interfacial current density [A.m-2]
+	- X-averaged lithium plating interfacial current density
+	- X-averaged lithium plating interfacial current density [A.m-2]
+	- Electrolyte tortuosity
+	- Positive electrolyte tortuosity
+	- X-averaged positive electrolyte tortuosity
+	- Negative electrolyte tortuosity
+	- X-averaged negative electrolyte tortuosity
+	- Separator tortuosity
+	- X-averaged separator tortuosity
+	- Leading-order electrolyte tortuosity
+	- Leading-order positive electrolyte tortuosity
+	- Leading-order x-averaged positive electrolyte tortuosity
+	- Leading-order negative electrolyte tortuosity
+	- Leading-order x-averaged negative electrolyte tortuosity
+	- Leading-order separator tortuosity
+	- Leading-order x-averaged separator tortuosity
+	- Electrode tortuosity
+	- Positive electrode tortuosity
+	- X-averaged positive electrode tortuosity
+	- Negative electrode tortuosity
+	- X-averaged negative electrode tortuosity
+	- Leading-order electrode tortuosity
+	- Leading-order positive electrode tortuosity
+	- Leading-order x-averaged positive electrode tortuosity
+	- Leading-order negative electrode tortuosity
+	- Leading-order x-averaged negative electrode tortuosity
+	- Separator volume-averaged velocity
+	- Separator volume-averaged velocity [m.s-1]
+	- Separator volume-averaged acceleration
+	- Separator volume-averaged acceleration [m.s-1]
+	- X-averaged separator volume-averaged acceleration
+	- X-averaged separator volume-averaged acceleration [m.s-1]
+	- Volume-averaged velocity
+	- Volume-averaged velocity [m.s-1]
+	- Volume-averaged acceleration
+	- X-averaged volume-averaged acceleration
+	- Volume-averaged acceleration [m.s-1]
+	- X-averaged volume-averaged acceleration [m.s-1]
+	- Pressure
+	- Negative particle flux
+	- X-averaged negative particle flux
+	- Negative effective diffusivity
+	- Negative effective diffusivity [m2.s-1]
+	- X-averaged negative effective diffusivity
+	- X-averaged negative effective diffusivity [m2.s-1]
+	- Negative electrode SOC
+	- Negative electrode volume-averaged concentration
+	- Negative electrode volume-averaged concentration [mol.m-3]
+	- Total lithium in negative electrode [mol]
+	- Positive particle flux
+	- X-averaged positive particle flux
+	- Positive effective diffusivity
+	- Positive effective diffusivity [m2.s-1]
+	- X-averaged positive effective diffusivity
+	- X-averaged positive effective diffusivity [m2.s-1]
+	- Positive electrode SOC
+	- Positive electrode volume-averaged concentration
+	- Positive electrode volume-averaged concentration [mol.m-3]
+	- Total lithium in positive electrode [mol]
+	- Electrolyte concentration
+	- Electrolyte concentration [mol.m-3]
+	- Electrolyte concentration [Molar]
+	- X-averaged electrolyte concentration
+	- X-averaged electrolyte concentration [mol.m-3]
+	- X-averaged electrolyte concentration [Molar]
+	- Negative electrolyte concentration
+	- Negative electrolyte concentration [mol.m-3]
+	- Negative electrolyte concentration [Molar]
+	- Separator electrolyte concentration
+	- Separator electrolyte concentration [mol.m-3]
+	- Separator electrolyte concentration [Molar]
+	- Positive electrolyte concentration
+	- Positive electrolyte concentration [mol.m-3]
+	- Positive electrolyte concentration [Molar]
+	- X-averaged negative electrolyte concentration
+	- X-averaged negative electrolyte concentration [mol.m-3]
+	- X-averaged separator electrolyte concentration
+	- X-averaged separator electrolyte concentration [mol.m-3]
+	- X-averaged positive electrolyte concentration
+	- X-averaged positive electrolyte concentration [mol.m-3]
+	- Negative current collector potential
+	- Negative current collector potential [V]
+	- Current collector current density
+	- Current collector current density [A.m-2]
+	- Leading-order current collector current density
+	- X-averaged negative electrode SEI interfacial current density
+	- Negative electrode SEI interfacial current density
+	- X-averaged positive electrode SEI interfacial current density
+	- Positive electrode SEI interfacial current density
+	- Negative electrode lithium plating reaction overpotential
+	- X-averaged negative electrode lithium plating reaction overpotential
+	- Negative electrode lithium plating reaction overpotential [V]
+	- X-averaged negative electrode lithium plating reaction overpotential [V]
+	- X-averaged negative electrode lithium plating interfacial current density
+	- X-averaged positive electrode lithium plating interfacial current density
+	- Negative electrode lithium plating interfacial current density
+	- Positive electrode lithium plating interfacial current density
+	- X-averaged negative electrode total interfacial current density
+	- X-averaged negative electrode total interfacial current density [A.m-2]
+	- X-averaged negative electrode total interfacial current density per volume [A.m-3]
+	- SEI film overpotential
+	- X-averaged SEI film overpotential
+	- SEI film overpotential [V]
+	- X-averaged SEI film overpotential [V]
+	- Negative electrode exchange current density
+	- X-averaged negative electrode exchange current density
+	- Negative electrode exchange current density [A.m-2]
+	- X-averaged negative electrode exchange current density [A.m-2]
+	- Negative electrode exchange current density per volume [A.m-3]
+	- X-averaged negative electrode exchange current density per volume [A.m-3]
+	- Negative electrode reaction overpotential
+	- X-averaged negative electrode reaction overpotential
+	- Negative electrode reaction overpotential [V]
+	- X-averaged negative electrode reaction overpotential [V]
+	- X-averaged negative electrode surface potential difference
+	- X-averaged negative electrode surface potential difference [V]
+	- Negative electrode open circuit potential
+	- Negative electrode open circuit potential [V]
+	- X-averaged negative electrode open circuit potential
+	- X-averaged negative electrode open circuit potential [V]
+	- Negative electrode entropic change
+	- Negative electrode entropic change [V.K-1]
+	- X-averaged negative electrode entropic change
+	- X-averaged negative electrode entropic change [V.K-1]
+	- X-averaged positive electrode total interfacial current density
+	- X-averaged positive electrode total interfacial current density [A.m-2]
+	- X-averaged positive electrode total interfacial current density per volume [A.m-3]
+	- Positive electrode exchange current density
+	- X-averaged positive electrode exchange current density
+	- Positive electrode exchange current density [A.m-2]
+	- X-averaged positive electrode exchange current density [A.m-2]
+	- Positive electrode exchange current density per volume [A.m-3]
+	- X-averaged positive electrode exchange current density per volume [A.m-3]
+	- Positive electrode reaction overpotential
+	- X-averaged positive electrode reaction overpotential
+	- Positive electrode reaction overpotential [V]
+	- X-averaged positive electrode reaction overpotential [V]
+	- X-averaged positive electrode surface potential difference
+	- X-averaged positive electrode surface potential difference [V]
+	- Positive electrode open circuit potential
+	- Positive electrode open circuit potential [V]
+	- X-averaged positive electrode open circuit potential
+	- X-averaged positive electrode open circuit potential [V]
+	- Positive electrode entropic change
+	- Positive electrode entropic change [V.K-1]
+	- X-averaged positive electrode entropic change
+	- X-averaged positive electrode entropic change [V.K-1]
+	- Negative electrode interfacial current density
+	- X-averaged negative electrode interfacial current density
+	- Negative electrode interfacial current density [A.m-2]
+	- X-averaged negative electrode interfacial current density [A.m-2]
+	- Negative electrode interfacial current density per volume [A.m-3]
+	- X-averaged negative electrode interfacial current density per volume [A.m-3]
+	- Positive electrode interfacial current density
+	- X-averaged positive electrode interfacial current density
+	- Positive electrode interfacial current density [A.m-2]
+	- X-averaged positive electrode interfacial current density [A.m-2]
+	- Positive electrode interfacial current density per volume [A.m-3]
+	- X-averaged positive electrode interfacial current density per volume [A.m-3]
+	- Interfacial current density
+	- Interfacial current density [A.m-2]
+	- Interfacial current density per volume [A.m-3]
+	- Exchange current density
+	- Exchange current density [A.m-2]
+	- Exchange current density per volume [A.m-3]
+	- Negative electrode potential
+	- Negative electrode potential [V]
+	- X-averaged negative electrode potential
+	- X-averaged negative electrode potential [V]
+	- Negative electrode ohmic losses
+	- Negative electrode ohmic losses [V]
+	- X-averaged negative electrode ohmic losses
+	- X-averaged negative electrode ohmic losses [V]
+	- Gradient of negative electrode potential
+	- Negative electrode current density
+	- Negative electrode current density [A.m-2]
+	- Negative electrolyte potential
+	- Negative electrolyte potential [V]
+	- Separator electrolyte potential
+	- Separator electrolyte potential [V]
+	- Positive electrolyte potential
+	- Positive electrolyte potential [V]
+	- Electrolyte potential
+	- Electrolyte potential [V]
+	- X-averaged electrolyte potential
+	- X-averaged electrolyte potential [V]
+	- X-averaged negative electrolyte potential
+	- X-averaged negative electrolyte potential [V]
+	- X-averaged separator electrolyte potential
+	- X-averaged separator electrolyte potential [V]
+	- X-averaged positive electrolyte potential
+	- X-averaged positive electrolyte potential [V]
+	- X-averaged electrolyte overpotential
+	- X-averaged electrolyte overpotential [V]
+	- Gradient of separator electrolyte potential
+	- Gradient of positive electrolyte potential
+	- Gradient of electrolyte potential
+	- Gradient of negative electrolyte potential
+	- Electrolyte current density
+	- Electrolyte current density [A.m-2]
+	- Negative electrolyte current density
+	- Negative electrolyte current density [A.m-2]
+	- Positive electrolyte current density
+	- Positive electrolyte current density [A.m-2]
+	- X-averaged concentration overpotential
+	- X-averaged electrolyte ohmic losses
+	- X-averaged concentration overpotential [V]
+	- X-averaged electrolyte ohmic losses [V]
+	- Negative electrode surface potential difference
+	- Negative electrode surface potential difference [V]
+	- Electrolyte flux
+	- Electrolyte flux [mol.m-2.s-1]
+	- Total lithium in electrolyte
+	- Total lithium in electrolyte [mol]
+	- Negative electrode oxygen interfacial current density
+	- X-averaged negative electrode oxygen interfacial current density
+	- Negative electrode oxygen interfacial current density [A.m-2]
+	- X-averaged negative electrode oxygen interfacial current density [A.m-2]
+	- Negative electrode oxygen interfacial current density per volume [A.m-3]
+	- X-averaged negative electrode oxygen interfacial current density per volume [A.m-3]
+	- Negative electrode oxygen exchange current density
+	- X-averaged negative electrode oxygen exchange current density
+	- Negative electrode oxygen exchange current density [A.m-2]
+	- X-averaged negative electrode oxygen exchange current density [A.m-2]
+	- Negative electrode oxygen exchange current density per volume [A.m-3]
+	- X-averaged negative electrode oxygen exchange current density per volume [A.m-3]
+	- Negative electrode oxygen reaction overpotential
+	- X-averaged negative electrode oxygen reaction overpotential
+	- Negative electrode oxygen reaction overpotential [V]
+	- X-averaged negative electrode oxygen reaction overpotential [V]
+	- Negative electrode oxygen open circuit potential
+	- Negative electrode oxygen open circuit potential [V]
+	- X-averaged negative electrode oxygen open circuit potential
+	- X-averaged negative electrode oxygen open circuit potential [V]
+	- Positive electrode potential
+	- Positive electrode potential [V]
+	- X-averaged positive electrode potential
+	- X-averaged positive electrode potential [V]
+	- Positive electrode ohmic losses
+	- Positive electrode ohmic losses [V]
+	- X-averaged positive electrode ohmic losses
+	- X-averaged positive electrode ohmic losses [V]
+	- Gradient of positive electrode potential
+	- Positive electrode current density
+	- Positive electrode current density [A.m-2]
+	- Electrode current density
+	- Positive current collector potential
+	- Positive current collector potential [V]
+	- Local voltage
+	- Local voltage [V]
+	- Terminal voltage
+	- Terminal voltage [V]
+	- Positive electrode surface potential difference
+	- Positive electrode surface potential difference [V]
+	- Ohmic heating
+	- Ohmic heating [W.m-3]
+	- X-averaged Ohmic heating
+	- X-averaged Ohmic heating [W.m-3]
+	- Volume-averaged Ohmic heating
+	- Volume-averaged Ohmic heating [W.m-3]
+	- Irreversible electrochemical heating
+	- Irreversible electrochemical heating [W.m-3]
+	- X-averaged irreversible electrochemical heating
+	- X-averaged irreversible electrochemical heating [W.m-3]
+	- Volume-averaged irreversible electrochemical heating
+	- Volume-averaged irreversible electrochemical heating [W.m-3]
+	- Reversible heating
+	- Reversible heating [W.m-3]
+	- X-averaged reversible heating
+	- X-averaged reversible heating [W.m-3]
+	- Volume-averaged reversible heating
+	- Volume-averaged reversible heating [W.m-3]
+	- Total heating
+	- Total heating [W.m-3]
+	- X-averaged total heating
+	- X-averaged total heating [W.m-3]
+	- Volume-averaged total heating
+	- Volume-averaged total heating [W.m-3]
+	- Positive electrode oxygen interfacial current density
+	- X-averaged positive electrode oxygen interfacial current density
+	- Positive electrode oxygen interfacial current density [A.m-2]
+	- X-averaged positive electrode oxygen interfacial current density [A.m-2]
+	- Positive electrode oxygen interfacial current density per volume [A.m-3]
+	- X-averaged positive electrode oxygen interfacial current density per volume [A.m-3]
+	- Positive electrode oxygen exchange current density
+	- X-averaged positive electrode oxygen exchange current density
+	- Positive electrode oxygen exchange current density [A.m-2]
+	- X-averaged positive electrode oxygen exchange current density [A.m-2]
+	- Positive electrode oxygen exchange current density per volume [A.m-3]
+	- X-averaged positive electrode oxygen exchange current density per volume [A.m-3]
+	- Positive electrode oxygen reaction overpotential
+	- X-averaged positive electrode oxygen reaction overpotential
+	- Positive electrode oxygen reaction overpotential [V]
+	- X-averaged positive electrode oxygen reaction overpotential [V]
+	- Positive electrode oxygen open circuit potential
+	- Positive electrode oxygen open circuit potential [V]
+	- X-averaged positive electrode oxygen open circuit potential
+	- X-averaged positive electrode oxygen open circuit potential [V]
+	- Oxygen interfacial current density
+	- Oxygen interfacial current density [A.m-2]
+	- Oxygen interfacial current density per volume [A.m-3]
+	- Oxygen exchange current density
+	- Oxygen exchange current density [A.m-2]
+	- Oxygen exchange current density per volume [A.m-3]
+	- X-averaged open circuit voltage
+	- Measured open circuit voltage
+	- X-averaged open circuit voltage [V]
+	- Measured open circuit voltage [V]
+	- X-averaged reaction overpotential
+	- X-averaged reaction overpotential [V]
+	- X-averaged solid phase ohmic losses
+	- X-averaged solid phase ohmic losses [V]
+	- X-averaged battery open circuit voltage [V]
+	- Measured battery open circuit voltage [V]
+	- X-averaged battery reaction overpotential [V]
+	- X-averaged battery solid phase ohmic losses [V]
+	- X-averaged battery electrolyte ohmic losses [V]
+	- X-averaged battery concentration overpotential [V]
+	- Battery voltage [V]
+	- Change in measured open circuit voltage
+	- Change in measured open circuit voltage [V]
+	- Local ECM resistance
+	- Local ECM resistance [Ohm]
+	- Terminal power [W]
+	- LAM_ne [%]
+	- LAM_pe [%]
+	- LLI [%]
+	- Loss of active material in negative electrode [%]
+	- Loss of active material in positive electrode [%]
+	- Loss of lithium inventory [%]
+	- Loss of lithium inventory, including electrolyte [%]
+	- Total lithium [mol]
+	- Total lithium in particles [mol]
+	- Total lithium lost [mol]
+	- Total lithium lost from particles [mol]
+	- Total lithium lost from electrolyte [mol]
+	- Total lithium lost to side reactions [mol]
+	- Total capacity lost to side reactions [A.h]
