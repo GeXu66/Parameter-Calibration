@@ -135,8 +135,10 @@ def main_simulation(param):
         [(
             f"Discharge at 0.5 C for 2 hours",  # ageing cycles
             # f"Discharge at 0.5 C until {min_voltage}V",  # ageing cycles
+            # f"Charge at 0.5 C for 0.5 hours",  # ageing cycles
         )] * cycle_number
     )
+    option = {"cell geometry": "arbitrary", "thermal": "lumped", "contact resistance": "false"}
     model = pybamm.lithium_ion.DFN()  # Doyle-Fuller-Newman model
     parameter_values = pybamm.ParameterValues(param_list[2])
     param_dict = {
@@ -145,6 +147,11 @@ def main_simulation(param):
         "Lower voltage cut-off [V]": min_voltage,
         "Upper voltage cut-off [V]": max_voltage,
         "Ambient temperature [K]": 273.15 + 35,
+        # "Initial temperature [K]": 273.15 + 100,
+        # "Reference temperature [K]": 273.15 + 100,
+        # "Total heat transfer coefficient [W.m-2.K-1]": 10,
+        # "Cell cooling surface area [m2]": 0.126,
+        # "Cell volume [m3]": 0.00257839,
         # cell
         "Negative current collector thickness [m]": 0.00001,
         # "Electrode height [m]": 0.725,
@@ -166,6 +173,12 @@ def main_simulation(param):
     time_resampled, time_voltage_simulation_resampled, time_voltage_resampled, time_rmse_value = compute_time_discharge(sol=sol, file_path=file)
     # plot_soc_discharge(soc_resampled, soc_voltage_simulation_resampled, soc_voltage_resampled, soc_rmse_value)
     # plot_time_discharge(time_resampled, time_voltage_simulation_resampled, time_voltage_resampled, time_rmse_value)
+    # output_variables = [
+    #     "Voltage [V]",
+    #     "X-averaged cell temperature [K]",
+    #     "Cell temperature [K]",
+    # ]
+    # pybamm.dynamic_plot(sol, output_variables)
     return time_rmse_value
 
 
@@ -262,6 +275,6 @@ def ga_optimization():
 if __name__ == '__main__':
     matplotlib.use('TkAgg')
     last_fitness = 0
-    ga_optimization()
-    # sol = [0.725, 28]
-    # main_simulation(sol)
+    # ga_optimization()
+    sol = [0.725, 28]
+    main_simulation(sol)
