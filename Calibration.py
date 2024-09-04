@@ -10,6 +10,37 @@ import multiprocessing
 from matplotlib import cm, colors, colormaps
 
 
+def plot_time_vs_voltage(file_path, time_simulation, voltage_simulation):
+    data = pd.read_csv(file_path)
+    # 绘制SOC vs Voltage图
+    fig, ax = plt.subplots()
+    time = data['Test_Time(s)']
+    voltage = data['Voltage(V)']
+    ax.plot(time[:1830], voltage[:1830], linestyle='-')
+
+    # voltage = voltage[:1830]
+    num_points = 1830
+    time_resampled = np.linspace(1, 1830, num_points)
+    interp_func_sim = interp1d(time_simulation, voltage_simulation, kind='linear', fill_value="extrapolate")
+    voltage_simulation_resampled = interp_func_sim(time_resampled)
+    # z1 = np.polyfit(voltage_simulation_resampled, voltage, 3)  # 用7次多项式拟合，可改变多项式阶数；
+    # p1 = np.poly1d(z1)  # 得到多项式系数，按照阶数从高到低排列
+    # print(p1)  # 显示多项式
+    # voltage_simulation = p1(voltage_simulation)  # 可直接使用yvals=np.polyval(z1,xxx)
+    ax.plot(time_simulation, voltage_simulation, linestyle='-')
+
+    plt.title('SOC vs Voltage')
+    plt.xlabel('SOC')
+    plt.ylabel('Voltage (V)')
+    plt.grid(True)
+    plt.tight_layout()
+
+    df = pd.DataFrame({"real_time": time[:1830], "real_voltage": voltage[:1830], "simu_time": time_resampled, "simu_voltage": voltage_simulation_resampled})
+    df.to_csv("data.csv", index=False, sep=",")
+
+    plt.show()
+
+
 def plot_soc_vs_voltage_real_bat(file_path):
     # 读取CSV文件
     data = pd.read_csv(file_path)
@@ -130,12 +161,12 @@ def main_simulation(param):
     pybamm.set_logging_level("NOTICE")
     cycle_number = 1
     min_voltage = 2.5
-    max_voltage = 3.35
+    max_voltage = 3.3107
     exp = pybamm.Experiment(
         [(
-            f"Discharge at 0.5 C for 2 hours",  # ageing cycles
+            # f"Discharge at 0.5 C for 2 hours",  # ageing cycles
             # f"Discharge at 0.5 C until {min_voltage}V",  # ageing cycles
-            # f"Charge at 0.5 C for 0.5 hours",  # ageing cycles
+            f"Charge at 0.5 C for 1830 seconds",  # ageing cycles
         )] * cycle_number
     )
     option = {"cell geometry": "arbitrary", "thermal": "lumped", "contact resistance": "false"}
@@ -147,7 +178,7 @@ def main_simulation(param):
         "Lower voltage cut-off [V]": min_voltage,
         "Upper voltage cut-off [V]": max_voltage,
         "Ambient temperature [K]": 273.15 + 35,
-        # "Initial temperature [K]": 273.15 + 100,
+        "Initial temperature [K]": 273.15 + 35,
         # "Reference temperature [K]": 273.15 + 100,
         # "Total heat transfer coefficient [W.m-2.K-1]": 10,
         # "Cell cooling surface area [m2]": 0.126,
@@ -164,7 +195,7 @@ def main_simulation(param):
     # Create a simulation
     sim = pybamm.Simulation(model, parameter_values=parameter_values, experiment=exp)
     # Define the parameter to vary
-    safe_solver = pybamm.CasadiSolver(mode="safe", dt_max=120)
+    safe_solver = pybamm.CasadiSolver(mode="safe", dt_max=0.1)
     # Run the simulation
     sim.solve(solver=safe_solver, calc_esoh=False, initial_soc=1)
     sol = sim.solution
@@ -173,12 +204,22 @@ def main_simulation(param):
     time_resampled, time_voltage_simulation_resampled, time_voltage_resampled, time_rmse_value = compute_time_discharge(sol=sol, file_path=file)
     # plot_soc_discharge(soc_resampled, soc_voltage_simulation_resampled, soc_voltage_resampled, soc_rmse_value)
     # plot_time_discharge(time_resampled, time_voltage_simulation_resampled, time_voltage_resampled, time_rmse_value)
+    # soc_init = 1
+    # # Extract the time and voltage
+    # soc_simulation = (soc_init - sol["Discharge capacity [A.h]"].entries / 280) * 100
     # output_variables = [
     #     "Voltage [V]",
     #     "X-averaged cell temperature [K]",
     #     "Cell temperature [K]",
+    #     "Resistance [Ohm]",
     # ]
+    # fig, ax = plt.subplots()
+    # ax.plot(soc_simulation)
     # pybamm.dynamic_plot(sol, output_variables)
+    # time_simulation = sol["Time [s]"].entries
+    # voltage_simulation = sol["Voltage [V]"].entries
+    # plot_time_vs_voltage("./Huaiwei_data/data.csv", time_simulation, voltage_simulation)
+
     return time_rmse_value
 
 
