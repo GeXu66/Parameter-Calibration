@@ -161,12 +161,13 @@ def main_simulation(param):
     pybamm.set_logging_level("NOTICE")
     cycle_number = 1
     min_voltage = 2.5
-    max_voltage = 3.3107
+    # 3.3107
+    max_voltage = 3.35
     exp = pybamm.Experiment(
         [(
-            # f"Discharge at 0.5 C for 2 hours",  # ageing cycles
+            f"Discharge at 0.5 C for 2 hours",  # ageing cycles
             # f"Discharge at 0.5 C until {min_voltage}V",  # ageing cycles
-            f"Charge at 0.5 C for 1830 seconds",  # ageing cycles
+            # f"Charge at 0.5 C for 1830 seconds",  # ageing cycles
         )] * cycle_number
     )
     option = {"cell geometry": "arbitrary", "thermal": "lumped", "contact resistance": "false"}
@@ -204,6 +205,7 @@ def main_simulation(param):
     time_resampled, time_voltage_simulation_resampled, time_voltage_resampled, time_rmse_value = compute_time_discharge(sol=sol, file_path=file)
     # plot_soc_discharge(soc_resampled, soc_voltage_simulation_resampled, soc_voltage_resampled, soc_rmse_value)
     # plot_time_discharge(time_resampled, time_voltage_simulation_resampled, time_voltage_resampled, time_rmse_value)
+
     # soc_init = 1
     # # Extract the time and voltage
     # soc_simulation = (soc_init - sol["Discharge capacity [A.h]"].entries / 280) * 100
@@ -270,13 +272,13 @@ def on_generation(ga_instance):
 
 def ga_optimization():
     num_genes = 2
-    num_generations = 100  # Number of generations.
-    num_parents_mating = 10  # Number of solutions to be selected as parents in the mating pool.
+    num_generations = 200  # Number of generations.
+    num_parents_mating = 20  # Number of solutions to be selected as parents in the mating pool.
     sol_per_pop = 20  # Number of solutions in the population.
     # define gene space
     gene_space = [
-        {'low': 0.5, 'high': 0.8, "step": 0.01},
-        {'low': 27, 'high': 29, "step": 0.02}
+        {'low': 0.6, 'high': 0.9},
+        {'low': 27, 'high': 29}
     ]
 
     ga_instance = pygad.GA(num_generations=num_generations,
@@ -316,6 +318,7 @@ def ga_optimization():
 if __name__ == '__main__':
     matplotlib.use('TkAgg')
     last_fitness = 0
-    # ga_optimization()
-    sol = [0.725, 28]
-    main_simulation(sol)
+    ga_optimization()
+    # sol = [0.725, 28]
+    # sol = [0.8, 28.98]
+    # main_simulation(sol)
