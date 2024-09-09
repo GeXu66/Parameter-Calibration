@@ -161,7 +161,7 @@ def read_file(file_name):
     return time_max, voltage_max, voltage_min, capacity
 
 
-def main_simulation(param, save=False):
+def main_simulation(param, save=False, plot=False):
     electrode_height = param[0]
     electrode_width = param[1]
     print("electrode_height:", electrode_height)
@@ -213,8 +213,9 @@ def main_simulation(param, save=False):
     sol = sim.solution
     soc_resampled, soc_voltage_simulation_resampled, soc_voltage_resampled, soc_rmse_value = compute_soc_discharge(sol=sol, capacity=parameter_values["Nominal cell capacity [A.h]"], file_path=file)
     time_resampled, time_voltage_simulation_resampled, time_voltage_resampled, time_rmse_value = compute_time_discharge(sol=sol, file_path=file)
-    # plot_soc_discharge(soc_resampled, soc_voltage_simulation_resampled, soc_voltage_resampled, soc_rmse_value)
-    plot_time_discharge(time_resampled, time_voltage_simulation_resampled, time_voltage_resampled, time_rmse_value, name)
+    if plot:
+        # plot_soc_discharge(soc_resampled, soc_voltage_simulation_resampled, soc_voltage_resampled, soc_rmse_value)
+        plot_time_discharge(time_resampled, time_voltage_simulation_resampled, time_voltage_resampled, time_rmse_value, name)
     if save:
         df = pd.DataFrame({"real_time": time_resampled, "real_voltage": time_voltage_resampled, "simu_time": time_resampled, "simu_voltage": time_voltage_simulation_resampled})
         df.to_csv(f"./simu_data/exp_{name}.csv", index=False, sep=",")
@@ -303,7 +304,6 @@ def ga_optimization():
 
     # Running the GA to optimize the parameters of the function.
     ga_instance.run()
-
     ga_instance.plot_fitness()
 
     # Returning the details of the best solution.
@@ -312,19 +312,19 @@ def ga_optimization():
     print(f"Fitness value of the best solution = {solution_fitness}")
     print(f"Index of the best solution : {solution_idx}")
 
-    prediction = main_simulation(solution, save=True)
+    # Saving the GA instance.
+    filename = 'genetic'  # The filename to which the instance is saved. The name is without extension.
+    ga_instance.save(filename=filename)
+
+    prediction = main_simulation(solution, save=True, plot=True)
     print(f"Predicted output based on the best solution : {prediction}")
 
     if ga_instance.best_solution_generation != -1:
         print(f"Best fitness value reached after {ga_instance.best_solution_generation} generations.")
 
-    # Saving the GA instance.
-    filename = 'genetic'  # The filename to which the instance is saved. The name is without extension.
-    ga_instance.save(filename=filename)
-
     # Loading the saved GA instance.
-    loaded_ga_instance = pygad.load(filename=filename)
-    loaded_ga_instance.plot_fitness()
+    # loaded_ga_instance = pygad.load(filename=filename)
+    # loaded_ga_instance.plot_fitness()
 
 
 if __name__ == '__main__':
@@ -333,4 +333,4 @@ if __name__ == '__main__':
     # ga_optimization()
     sol = [0.725, 28]
     # sol = [0.86941868, 29.00751672]
-    main_simulation(sol, save=True)
+    main_simulation(sol, save=True, plot=True)
