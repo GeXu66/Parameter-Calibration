@@ -114,17 +114,18 @@ def compute_time_discharge(sol, file_path):
     # Extract time and voltage from the simulation
     time_simulation = sol["Time [s]"].entries
     voltage_simulation = sol["Voltage [V]"].entries
-
-    # Resample voltage_simulation to 7200 points
-    num_points = 720
-    time_resampled = np.linspace(0, 7200, num_points)
-    interp_func_sim = interp1d(time_simulation, voltage_simulation, kind='linear', fill_value="extrapolate")
-    voltage_simulation_resampled = interp_func_sim(time_resampled)
-
     # Load real battery data
     data = pd.read_csv(file_path)
     time_real = data['time']
     voltage_real = data['V']
+    time_max = data['time'].values[-1]
+    simu_time_max = time_simulation[-1]
+    real_time_max = min(time_max, simu_time_max)
+
+    # Resample voltage_simulation to 7200 points
+    time_resampled = np.arange(0, real_time_max + 1, 10)
+    interp_func_sim = interp1d(time_simulation, voltage_simulation, kind='linear', fill_value="extrapolate")
+    voltage_simulation_resampled = interp_func_sim(time_resampled)
 
     # Resample real voltage data to 7200 points
     interp_func_real = interp1d(time_real, voltage_real, kind='linear', fill_value="extrapolate")
@@ -133,39 +134,52 @@ def compute_time_discharge(sol, file_path):
     # Calculate RMSE
     rmse_value = np.sqrt(mean_squared_error(voltage_real_resampled, voltage_simulation_resampled))
     print(f"TIME DISCHARGE RMSE: {rmse_value}")
-
     return time_resampled, voltage_simulation_resampled, voltage_real_resampled, rmse_value
 
 
-def plot_time_discharge(time_resampled, voltage_simulation_resampled, voltage_real_resampled, rmse_value):
+def plot_time_discharge(time_resampled, voltage_simulation_resampled, voltage_real_resampled, rmse_value, name):
     fig, ax = plt.subplots()
     # Plotting
-    ax.plot(time_resampled, voltage_simulation_resampled, marker='o', linestyle='-', label='Simulation')
-    ax.plot(time_resampled, voltage_real_resampled, marker='o', linestyle='-', label='Experiment')
+    ax.plot(time_resampled, voltage_simulation_resampled, linestyle='-', label='Simulation')
+    ax.plot(time_resampled, voltage_real_resampled, linestyle='-', label='Experiment')
 
     plt.xlabel('Time [s]')
     plt.ylabel('Terminal Voltage [V]')
-    plt.title(f"Time vs Terminal Voltage--RMSE:{rmse_value:.4f} V")
+    plt.title(f"{name}--RMSE:{rmse_value:.4f} V")
     plt.grid(True)
     plt.legend()
     plt.tight_layout()
     plt.show()
 
 
-def main_simulation(param):
+def read_file(file_name):
+    data = pd.read_csv(file_name)
+    time_max = data['time'].values[-1]
+    voltage_max = data['V'].values[0]
+    voltage_min = data['V'].values[-1]
+    capacity = data['Ah'].values[-1]
+    return time_max, voltage_max, voltage_min, capacity
+
+
+def main_simulation(param, save=False):
     electrode_height = param[0]
     electrode_width = param[1]
     print("electrode_height:", electrode_height)
     print("electrode_width", electrode_width)
     param_list = ["Ai2020", "Chen2020", "Prada2013"]
     pybamm.set_logging_level("NOTICE")
+    name = "81#-T25-1C"
+    file = f"./bat_data/{name}.csv"
+    charge_capacity = float(name.split("-")[-1].replace("C", ""))
+    temperature = int(name.split("-")[1].replace("T", ""))
+    time_max, voltage_max, voltage_min, capacity = read_file(file_name=file)
     cycle_number = 1
-    min_voltage = 2.5
+    min_voltage = voltage_min
     # 3.3107
-    max_voltage = 3.35
+    max_voltage = voltage_max
     exp = pybamm.Experiment(
         [(
-            f"Discharge at 0.5 C for 2 hours",  # ageing cycles
+            f"Discharge at {charge_capacity} C for {time_max} seconds",  # ageing cycles
             # f"Discharge at 0.5 C until {min_voltage}V",  # ageing cycles
             # f"Charge at 0.5 C for 1830 seconds",  # ageing cycles
         )] * cycle_number
@@ -175,19 +189,16 @@ def main_simulation(param):
     parameter_values = pybamm.ParameterValues(param_list[2])
     param_dict = {
         "Number of electrodes connected in parallel to make a cell": 1,
-        "Nominal cell capacity [A.h]": 280,
+        "Nominal cell capacity [A.h]": capacity,
         "Lower voltage cut-off [V]": min_voltage,
         "Upper voltage cut-off [V]": max_voltage,
-        "Ambient temperature [K]": 273.15 + 35,
-        "Initial temperature [K]": 273.15 + 35,
-        # "Reference temperature [K]": 273.15 + 100,
+        "Ambient temperature [K]": 273.15 + 25,
+        "Initial temperature [K]": 273.15 + temperature,
         # "Total heat transfer coefficient [W.m-2.K-1]": 10,
         # "Cell cooling surface area [m2]": 0.126,
         # "Cell volume [m3]": 0.00257839,
         # cell
         "Negative current collector thickness [m]": 0.00001,
-        # "Electrode height [m]": 0.725,
-        # "Electrode width [m]": 28,
         "Electrode height [m]": electrode_height,
         "Electrode width [m]": electrode_width,
     }
@@ -200,12 +211,13 @@ def main_simulation(param):
     # Run the simulation
     sim.solve(solver=safe_solver, calc_esoh=False, initial_soc=1)
     sol = sim.solution
-    file = "./Huaiwei_data/79#-T35-0.5C.csv"
     soc_resampled, soc_voltage_simulation_resampled, soc_voltage_resampled, soc_rmse_value = compute_soc_discharge(sol=sol, capacity=parameter_values["Nominal cell capacity [A.h]"], file_path=file)
     time_resampled, time_voltage_simulation_resampled, time_voltage_resampled, time_rmse_value = compute_time_discharge(sol=sol, file_path=file)
     # plot_soc_discharge(soc_resampled, soc_voltage_simulation_resampled, soc_voltage_resampled, soc_rmse_value)
-    # plot_time_discharge(time_resampled, time_voltage_simulation_resampled, time_voltage_resampled, time_rmse_value)
-
+    plot_time_discharge(time_resampled, time_voltage_simulation_resampled, time_voltage_resampled, time_rmse_value, name)
+    if save:
+        df = pd.DataFrame({"real_time": time_resampled, "real_voltage": time_voltage_resampled, "simu_time": time_resampled, "simu_voltage": time_voltage_simulation_resampled})
+        df.to_csv(f"./simu_data/exp_{name}.csv", index=False, sep=",")
     # soc_init = 1
     # # Extract the time and voltage
     # soc_simulation = (soc_init - sol["Discharge capacity [A.h]"].entries / 280) * 100
@@ -318,7 +330,7 @@ def ga_optimization():
 if __name__ == '__main__':
     matplotlib.use('TkAgg')
     last_fitness = 0
-    ga_optimization()
-    # sol = [0.725, 28]
-    # sol = [0.8, 28.98]
-    # main_simulation(sol)
+    # ga_optimization()
+    sol = [0.725, 28]
+    # sol = [0.86941868, 29.00751672]
+    main_simulation(sol, save=True)
