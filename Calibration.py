@@ -149,6 +149,7 @@ def plot_time_discharge(time_resampled, voltage_simulation_resampled, voltage_re
     plt.grid(True)
     plt.legend()
     plt.tight_layout()
+    fig.savefig(f"./simu_fig/{name}.png")
     plt.show()
 
 
