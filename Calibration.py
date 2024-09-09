@@ -168,7 +168,7 @@ def main_simulation(param, save=False):
     print("electrode_width", electrode_width)
     param_list = ["Ai2020", "Chen2020", "Prada2013"]
     pybamm.set_logging_level("NOTICE")
-    name = "81#-T25-1C"
+    name = "81#-T25-0.33C"
     file = f"./bat_data/{name}.csv"
     charge_capacity = float(name.split("-")[-1].replace("C", ""))
     temperature = int(name.split("-")[1].replace("T", ""))
@@ -312,7 +312,7 @@ def ga_optimization():
     print(f"Fitness value of the best solution = {solution_fitness}")
     print(f"Index of the best solution : {solution_idx}")
 
-    prediction = main_simulation(solution)
+    prediction = main_simulation(solution, save=True)
     print(f"Predicted output based on the best solution : {prediction}")
 
     if ga_instance.best_solution_generation != -1:
