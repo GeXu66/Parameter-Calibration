@@ -371,7 +371,6 @@ def ga_optimization():
     ]
 
     ga_instance = pygad.GA(num_generations=num_generations,
-                           fitness_batch_size=16,
                            num_parents_mating=num_parents_mating,
                            sol_per_pop=sol_per_pop,
                            num_genes=num_genes,
@@ -379,7 +378,7 @@ def ga_optimization():
                            save_best_solutions=True,
                            fitness_func=fitness_func,
                            on_generation=on_generation,
-                           parallel_processing=True)
+                           parallel_processing=16)
 
     # Running the GA to optimize the parameters of the function.
     ga_instance.run()
