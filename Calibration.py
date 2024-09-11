@@ -321,7 +321,9 @@ def run_with_timeout(param, timeout=60):
 def fitness_func(ga_instance, solution, solution_idx):
     print(solution)
     time_rmse_value = run_with_timeout(solution)
-    fitness = -time_rmse_value ** 2
+    # fitness = -time_rmse_value ** 2
+    fitness = -np.log(time_rmse_value)
+    print("RMSE (mV):", time_rmse_value*1000)
     print("fitness:", fitness)
     return fitness
 
