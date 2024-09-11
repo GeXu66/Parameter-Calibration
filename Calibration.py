@@ -165,13 +165,39 @@ def read_file(file_name):
 def main_simulation(param, save=False, plot=False):
     electrode_height = param[0]
     electrode_width = param[1]
-    print("electrode_height:", electrode_height)
-    print("electrode_width", electrode_width)
+    Negative_electrode_conductivity = param[2]
+    Positive_electrode_diffusivity = param[3]
+    Positive_particle_radius = param[4]
+    Initial_concentration_in_positive_electrode = param[5]
+    Initial_concentration_in_negative_electrode = param[6]
+    Positive_electrode_conductivity = param[7]
+    Negative_particle_radius = param[8]
+    Negative_electrode_thickness = param[9]
+    Total_heat_transfer_coefficient = param[10]
+    Separator_density = param[11]
+    Separator_thermal_conductivity = param[12]
+    Positive_electrode_porosity = param[13]
+    Separator_specific_heat_capacity = param[14]
+    Maximum_concentration_in_positive_electrode = param[15]
+    Negative_electrode_Bruggeman_coefficient = param[16]
+    Positive_electrode_Bruggeman_coefficient = param[17]
+    Separator_porosity = param[18]
+    Negative_current_collector_thickness = param[19]
+    Positive_current_collector_thickness = param[20]
+    Positive_electrode_thickness = param[21]
+    Positive_electrode_active_material_volume_fraction = param[22]
+    Negative_electrode_specific_heat_capacity = param[23]
+    Positive_electrode_thermal_conductivity = param[24]
+    Negative_electrode_active_material_volume_fraction = param[25]
+    Negative_electrode_density = param[26]
+
+    # print("electrode_height:", electrode_height)
+    # print("electrode_width", electrode_width)
     param_list = ["Ai2020", "Chen2020", "Prada2013"]
     pybamm.set_logging_level("NOTICE")
     name = "81#-T25-0.33C"
     file = f"./bat_data/{name}.csv"
-    charge_capacity = float(name.split("-")[-1].replace("C", ""))
+    discharge_cur = float(name.split("-")[-1].replace("C", ""))
     temperature = int(name.split("-")[1].replace("T", ""))
     time_max, voltage_max, voltage_min, capacity = read_file(file_name=file)
     cycle_number = 1
@@ -180,7 +206,7 @@ def main_simulation(param, save=False, plot=False):
     max_voltage = voltage_max
     exp = pybamm.Experiment(
         [(
-            f"Discharge at {charge_capacity} C for {time_max} seconds",  # ageing cycles
+            f"Discharge at {discharge_cur} C for {time_max} seconds",  # ageing cycles
             # f"Discharge at 0.5 C until {min_voltage}V",  # ageing cycles
             # f"Charge at 0.5 C for 1830 seconds",  # ageing cycles
         )] * cycle_number
@@ -199,9 +225,33 @@ def main_simulation(param, save=False, plot=False):
         # "Cell cooling surface area [m2]": 0.126,
         # "Cell volume [m3]": 0.00257839,
         # cell
-        "Negative current collector thickness [m]": 0.00001,
         "Electrode height [m]": electrode_height,
         "Electrode width [m]": electrode_width,
+        "Negative electrode conductivity [S.m-1]": Negative_electrode_conductivity,
+        "Positive electrode diffusivity [m2.s-1]": Positive_electrode_diffusivity,
+        "Positive particle radius [m]": Positive_particle_radius,
+        "Initial concentration in positive electrode [mol.m-3]": Initial_concentration_in_positive_electrode,
+        "Initial concentration in negative electrode [mol.m-3]": Initial_concentration_in_negative_electrode,
+        "Positive electrode conductivity [S.m-1]": Positive_electrode_conductivity,
+        "Negative particle radius [m]": Negative_particle_radius,
+        "Negative electrode thickness [m]": Negative_electrode_thickness,
+        "Total heat transfer coefficient [W.m-2.K-1]": Total_heat_transfer_coefficient,
+        "Separator density [kg.m-3]": Separator_density,
+        "Separator thermal conductivity [W.m-1.K-1]": Separator_thermal_conductivity,
+        "Positive electrode porosity": Positive_electrode_porosity,
+        "Separator specific heat capacity [J.kg-1.K-1]": Separator_specific_heat_capacity,
+        "Maximum concentration in positive electrode [mol.m-3]": Maximum_concentration_in_positive_electrode,
+        "Negative electrode Bruggeman coefficient (electrolyte)": Negative_electrode_Bruggeman_coefficient,
+        "Positive electrode Bruggeman coefficient (electrolyte)": Positive_electrode_Bruggeman_coefficient,
+        "Separator porosity": Separator_porosity,
+        "Negative current collector thickness [m]": Negative_current_collector_thickness,
+        "Positive current collector thickness [m]": Positive_current_collector_thickness,
+        "Positive electrode thickness [m]": Positive_electrode_thickness,
+        "Positive electrode active material volume fraction": Positive_electrode_active_material_volume_fraction,
+        "Negative electrode specific heat capacity [J.kg-1.K-1]": Negative_electrode_specific_heat_capacity,
+        "Positive electrode thermal conductivity [W.m-1.K-1]": Positive_electrode_thermal_conductivity,
+        "Negative electrode active material volume fraction": Negative_electrode_active_material_volume_fraction,
+        "Negative electrode density [kg.m-3]": Negative_electrode_density,
     }
     # Update the parameter value
     parameter_values.update(param_dict, check_already_exists=False)
@@ -271,7 +321,7 @@ def run_with_timeout(param, timeout=60):
 def fitness_func(ga_instance, solution, solution_idx):
     print(solution)
     time_rmse_value = run_with_timeout(solution)
-    fitness = 1.0 / time_rmse_value
+    fitness = -time_rmse_value ** 2
     print("fitness:", fitness)
     return fitness
 
@@ -285,23 +335,51 @@ def on_generation(ga_instance):
 
 
 def ga_optimization():
-    num_genes = 2
-    num_generations = 200  # Number of generations.
-    num_parents_mating = 20  # Number of solutions to be selected as parents in the mating pool.
-    sol_per_pop = 20  # Number of solutions in the population.
+    num_genes = 27
+    num_generations = 600  # Number of generations.
+    num_parents_mating = 30  # Number of solutions to be selected as parents in the mating pool.
+    sol_per_pop = 40  # Number of solutions in the population.
     # define gene space
     gene_space = [
-        {'low': 0.6, 'high': 0.9},
-        {'low': 27, 'high': 29}
+        {'low': 0.6, 'high': 1},  # Electrode height
+        {'low': 25, 'high': 30},  # Electrode width
+        {'low': 14, 'high': 215},  # Negative electrode conductivity
+        {'low': 5.9e-18, 'high': 1e-14},  # Positive electrode diffusivity
+        {'low': 1e-8, 'high': 1e-5},  # Positive particle radius
+        {'low': 35.3766672, 'high': 31513},  # Initial concentration in positive electrode
+        {'low': 48.8682, 'high': 29866},  # Initial concentration in negative electrode
+        {'low': 0.18, 'high': 100},  # Positive electrode conductivity
+        {'low': 0.0000005083, 'high': 0.0000137},  # Negative particle radius
+        {'low': 0.000036, 'high': 0.0007},  # Negative electrode thickness
+        {'low': 5, 'high': 35},  # Total heat transfer coefficient
+        {'low': 397, 'high': 2470},  # Separator density
+        {'low': 0.10672, 'high': 0.34},  # Separator thermal conductivity
+        {'low': 0.12728395, 'high': 0.4},  # Positive electrode porosity
+        {'low': 700, 'high': 1978},  # Separator specific heat capacity
+        {'low': 22806, 'high': 63104},  # Maximum concentration in positive electrode
+        {'low': 1.5, 'high': 4},  # Negative electrode Bruggeman coefficient
+        {'low': 1.5, 'high': 4},  # Positive electrode Bruggeman coefficient
+        {'low': 0.39, 'high': 1},  # Separator porosity
+        {'low': 0.00001, 'high': 0.000025},  # Negative current collector thickness
+        {'low': 0.00001, 'high': 0.000025},  # Positive current collector thickness
+        {'low': 0.000042, 'high': 0.0001},  # Positive electrode thickness
+        {'low': 0.28485556, 'high': 0.665},  # Positive electrode active material volume fraction
+        {'low': 700, 'high': 1437},  # Negative electrode specific heat capacity
+        {'low': 1.04, 'high': 2.1},  # Positive electrode thermal conductivity
+        {'low': 0.372403, 'high': 0.75},  # Negative electrode active material volume fraction
+        {'low': 1555, 'high': 3100},  # Negative electrode density
     ]
 
     ga_instance = pygad.GA(num_generations=num_generations,
+                           fitness_batch_size=16,
                            num_parents_mating=num_parents_mating,
                            sol_per_pop=sol_per_pop,
                            num_genes=num_genes,
                            gene_space=gene_space,
+                           save_best_solutions=True,
                            fitness_func=fitness_func,
-                           on_generation=on_generation)
+                           on_generation=on_generation,
+                           parallel_processing=True)
 
     # Running the GA to optimize the parameters of the function.
     ga_instance.run()
