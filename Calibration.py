@@ -322,7 +322,7 @@ def fitness_func(ga_instance, solution, solution_idx):
     fitness = -time_rmse_value ** 2
     print("Solution Value", solution)
     # fitness = -np.log(time_rmse_value)
-    print("RMSE (mV):", time_rmse_value*1000)
+    print("RMSE (mV):", time_rmse_value * 1000)
     print("fitness:", fitness)
     return fitness
 
@@ -335,7 +335,7 @@ def on_generation(ga_instance):
     last_fitness = ga_instance.best_solution(pop_fitness=ga_instance.last_generation_fitness)[1]
 
 
-def ga_optimization():
+def ga_optimization(file_name):
     num_genes = 27
     num_generations = 200  # Number of generations.
     num_parents_mating = 20  # Number of solutions to be selected as parents in the mating pool.
@@ -392,7 +392,7 @@ def ga_optimization():
     print(f"Index of the best solution : {solution_idx}")
 
     # Saving the GA instance.
-    filename = f'./solutions/{name}'  # The filename to which the instance is saved. The name is without extension.
+    filename = f'./solutions/{file_name}'  # The filename to which the instance is saved. The name is without extension.
     ga_instance.save(filename=filename)
 
     prediction = main_simulation(solution, save=True, plot=True)
@@ -408,9 +408,11 @@ def ga_optimization():
 
 if __name__ == '__main__':
     matplotlib.use('TkAgg')
-    last_fitness = 0
-    name = "81#-T25-0.33C"
-    # ga_optimization()
-    sol = [0.725, 28]
-    # sol = [0.86941868, 29.00751672]
-    main_simulation(sol, save=True, plot=True)
+    name_list = ["81#-T25-0.1C", "81#-T25-0.2C", "81#-T25-0.33C", "81#-T25-0.1C"]
+    for i in range(3):
+        last_fitness = 0
+        name = name_list[i]
+        ga_optimization(file_name=name)
+        # sol = [0.725, 28]
+        # # sol = [0.86941868, 29.00751672]
+        # main_simulation(sol, save=True, plot=True)
