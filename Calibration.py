@@ -163,33 +163,33 @@ def read_file(file_name):
 
 
 def main_simulation(param, save=False, plot=False):
-    electrode_height = param[0]
-    electrode_width = param[1]
-    Negative_electrode_conductivity = param[2]
-    Positive_electrode_diffusivity = param[3]
-    Positive_particle_radius = param[4]
-    Initial_concentration_in_positive_electrode = param[5]
-    Initial_concentration_in_negative_electrode = param[6]
-    Positive_electrode_conductivity = param[7]
-    Negative_particle_radius = param[8]
-    Negative_electrode_thickness = param[9]
-    Total_heat_transfer_coefficient = param[10]
-    Separator_density = param[11]
-    Separator_thermal_conductivity = param[12]
-    Positive_electrode_porosity = param[13]
-    Separator_specific_heat_capacity = param[14]
-    Maximum_concentration_in_positive_electrode = param[15]
-    Negative_electrode_Bruggeman_coefficient = param[16]
-    Positive_electrode_Bruggeman_coefficient = param[17]
-    Separator_porosity = param[18]
-    Negative_current_collector_thickness = param[19]
-    Positive_current_collector_thickness = param[20]
-    Positive_electrode_thickness = param[21]
-    Positive_electrode_active_material_volume_fraction = param[22]
-    Negative_electrode_specific_heat_capacity = param[23]
-    Positive_electrode_thermal_conductivity = param[24]
-    Negative_electrode_active_material_volume_fraction = param[25]
-    Negative_electrode_density = param[26]
+    electrode_height = min_max_func(0.6, 1, param[0])
+    electrode_width = min_max_func(25, 30, param[1])
+    Negative_electrode_conductivity = min_max_func(14, 215, param[2])
+    Positive_electrode_diffusivity = min_max_func(5.9e-18, 1e-14, param[3])
+    Positive_particle_radius = min_max_func(1e-8, 1e-5, param[4])
+    Initial_concentration_in_positive_electrode = min_max_func(35.3766672, 31513, param[5])
+    Initial_concentration_in_negative_electrode = min_max_func(48.8682, 29866, param[6])
+    Positive_electrode_conductivity = min_max_func(0.18, 100, param[7])
+    Negative_particle_radius = min_max_func(0.0000005083, 0.0000137, param[8])
+    Negative_electrode_thickness = min_max_func(0.000036, 0.0007, param[9])
+    Total_heat_transfer_coefficient = min_max_func(5, 35, param[10])
+    Separator_density = min_max_func(397, 2470, param[11])
+    Separator_thermal_conductivity = min_max_func(0.10672, 0.34, param[12])
+    Positive_electrode_porosity = min_max_func(0.12728395, 0.4, param[13])
+    Separator_specific_heat_capacity = min_max_func(700, 1978, param[14])
+    Maximum_concentration_in_positive_electrode = min_max_func(22806, 63104, param[15])
+    Negative_electrode_Bruggeman_coefficient = min_max_func(1.5, 4, param[16])
+    Positive_electrode_Bruggeman_coefficient = min_max_func(1.5, 4, param[17])
+    Separator_porosity = min_max_func(0.39, 1, param[18])
+    Negative_current_collector_thickness = min_max_func(0.00001, 0.000025, param[19])
+    Positive_current_collector_thickness = min_max_func(0.00001, 0.000025, param[20])
+    Positive_electrode_thickness = min_max_func(0.000042, 0.0001, param[21])
+    Positive_electrode_active_material_volume_fraction = min_max_func(0.28485556, 0.665, param[22])
+    Negative_electrode_specific_heat_capacity = min_max_func(700, 1437, param[23])
+    Positive_electrode_thermal_conductivity = min_max_func(1.04, 2.1, param[24])
+    Negative_electrode_active_material_volume_fraction = min_max_func(0.372403, 0.75, param[25])
+    Negative_electrode_density = min_max_func(1555, 3100, param[26])
 
     # print("electrode_height:", electrode_height)
     # print("electrode_width", electrode_width)
@@ -320,7 +320,7 @@ def run_with_timeout(param, timeout=60):
 def fitness_func(ga_instance, solution, solution_idx):
     time_rmse_value = run_with_timeout(solution)
     fitness = -time_rmse_value ** 2
-    print("Solution Value", solution)
+    print("Norm Solution Value", solution)
     # fitness = -np.log(time_rmse_value)
     print("RMSE (mV):", time_rmse_value * 1000)
     print("fitness:", fitness)
@@ -335,6 +335,10 @@ def on_generation(ga_instance):
     last_fitness = ga_instance.best_solution(pop_fitness=ga_instance.last_generation_fitness)[1]
 
 
+def min_max_func(low, high, norm_value):
+    return norm_value * (high - low) + low
+
+
 def ga_optimization(file_name):
     num_genes = 27
     num_generations = 200  # Number of generations.
@@ -342,33 +346,33 @@ def ga_optimization(file_name):
     sol_per_pop = 40  # Number of solutions in the population.
     # define gene space
     gene_space = [
-        {'low': 0.6, 'high': 1},  # Electrode height
-        {'low': 25, 'high': 30},  # Electrode width
-        {'low': 14, 'high': 215},  # Negative electrode conductivity
-        {'low': 5.9e-18, 'high': 1e-14},  # Positive electrode diffusivity
-        {'low': 1e-8, 'high': 1e-5},  # Positive particle radius
-        {'low': 35.3766672, 'high': 31513},  # Initial concentration in positive electrode
-        {'low': 48.8682, 'high': 29866},  # Initial concentration in negative electrode
-        {'low': 0.18, 'high': 100},  # Positive electrode conductivity
-        {'low': 0.0000005083, 'high': 0.0000137},  # Negative particle radius
-        {'low': 0.000036, 'high': 0.0007},  # Negative electrode thickness
-        {'low': 5, 'high': 35},  # Total heat transfer coefficient
-        {'low': 397, 'high': 2470},  # Separator density
-        {'low': 0.10672, 'high': 0.34},  # Separator thermal conductivity
-        {'low': 0.12728395, 'high': 0.4},  # Positive electrode porosity
-        {'low': 700, 'high': 1978},  # Separator specific heat capacity
-        {'low': 22806, 'high': 63104},  # Maximum concentration in positive electrode
-        {'low': 1.5, 'high': 4},  # Negative electrode Bruggeman coefficient
-        {'low': 1.5, 'high': 4},  # Positive electrode Bruggeman coefficient
-        {'low': 0.39, 'high': 1},  # Separator porosity
-        {'low': 0.00001, 'high': 0.000025},  # Negative current collector thickness
-        {'low': 0.00001, 'high': 0.000025},  # Positive current collector thickness
-        {'low': 0.000042, 'high': 0.0001},  # Positive electrode thickness
-        {'low': 0.28485556, 'high': 0.665},  # Positive electrode active material volume fraction
-        {'low': 700, 'high': 1437},  # Negative electrode specific heat capacity
-        {'low': 1.04, 'high': 2.1},  # Positive electrode thermal conductivity
-        {'low': 0.372403, 'high': 0.75},  # Negative electrode active material volume fraction
-        {'low': 1555, 'high': 3100},  # Negative electrode density
+        {'low': 0, 'high': 1},  # Electrode height
+        {'low': 0, 'high': 1},  # Electrode width
+        {'low': 0, 'high': 1},  # Negative electrode conductivity
+        {'low': 0, 'high': 1},  # Positive electrode diffusivity
+        {'low': 0, 'high': 1},  # Positive particle radius
+        {'low': 0, 'high': 1},  # Initial concentration in positive electrode
+        {'low': 0, 'high': 1},  # Initial concentration in negative electrode
+        {'low': 0, 'high': 1},  # Positive electrode conductivity
+        {'low': 0, 'high': 1},  # Negative particle radius
+        {'low': 0, 'high': 1},  # Negative electrode thickness
+        {'low': 0, 'high': 1},  # Total heat transfer coefficient
+        {'low': 0, 'high': 1},  # Separator density
+        {'low': 0, 'high': 1},  # Separator thermal conductivity
+        {'low': 0, 'high': 1},  # Positive electrode porosity
+        {'low': 0, 'high': 1},  # Separator specific heat capacity
+        {'low': 0, 'high': 1},  # Maximum concentration in positive electrode
+        {'low': 0, 'high': 1},  # Negative electrode Bruggeman coefficient
+        {'low': 0, 'high': 1},  # Positive electrode Bruggeman coefficient
+        {'low': 0, 'high': 1},  # Separator porosity
+        {'low': 0, 'high': 1},  # Negative current collector thickness
+        {'low': 0, 'high': 1},  # Positive current collector thickness
+        {'low': 0, 'high': 1},  # Positive electrode thickness
+        {'low': 0, 'high': 1},  # Positive electrode active material volume fraction
+        {'low': 0, 'high': 1},  # Negative electrode specific heat capacity
+        {'low': 0, 'high': 1},  # Positive electrode thermal conductivity
+        {'low': 0, 'high': 1},  # Negative electrode active material volume fraction
+        {'low': 0, 'high': 1},  # Negative electrode density
     ]
 
     ga_instance = pygad.GA(num_generations=num_generations,
@@ -379,7 +383,7 @@ def ga_optimization(file_name):
                            save_best_solutions=True,
                            fitness_func=fitness_func,
                            on_generation=on_generation,
-                           parallel_processing=32)
+                           parallel_processing=16)
 
     # Running the GA to optimize the parameters of the function.
     ga_instance.run()
@@ -409,10 +413,9 @@ def ga_optimization(file_name):
 if __name__ == '__main__':
     matplotlib.use('TkAgg')
     name_list = ["81#-T25-0.1C", "81#-T25-0.2C", "81#-T25-0.33C", "81#-T25-0.1C"]
-    for i in range(3):
-        last_fitness = 0
-        name = name_list[i]
-        ga_optimization(file_name=name)
-        # sol = [0.725, 28]
-        # # sol = [0.86941868, 29.00751672]
-        # main_simulation(sol, save=True, plot=True)
+    last_fitness = 0
+    name = name_list[0]
+    ga_optimization(file_name=name)
+    # sol = [0.725, 28]
+    # # sol = [0.86941868, 29.00751672]
+    # main_simulation(sol, save=True, plot=True)
