@@ -195,7 +195,6 @@ def main_simulation(param, save=False, plot=False):
     # print("electrode_width", electrode_width)
     param_list = ["Ai2020", "Chen2020", "Prada2013"]
     pybamm.set_logging_level("NOTICE")
-    name = "81#-T25-0.33C"
     file = f"./bat_data/{name}.csv"
     discharge_cur = float(name.split("-")[-1].replace("C", ""))
     temperature = int(name.split("-")[1].replace("T", ""))
@@ -338,8 +337,8 @@ def on_generation(ga_instance):
 
 def ga_optimization():
     num_genes = 27
-    num_generations = 600  # Number of generations.
-    num_parents_mating = 30  # Number of solutions to be selected as parents in the mating pool.
+    num_generations = 200  # Number of generations.
+    num_parents_mating = 20  # Number of solutions to be selected as parents in the mating pool.
     sol_per_pop = 40  # Number of solutions in the population.
     # define gene space
     gene_space = [
@@ -380,7 +379,7 @@ def ga_optimization():
                            save_best_solutions=True,
                            fitness_func=fitness_func,
                            on_generation=on_generation,
-                           parallel_processing=16)
+                           parallel_processing=32)
 
     # Running the GA to optimize the parameters of the function.
     ga_instance.run()
@@ -393,7 +392,7 @@ def ga_optimization():
     print(f"Index of the best solution : {solution_idx}")
 
     # Saving the GA instance.
-    filename = 'genetic'  # The filename to which the instance is saved. The name is without extension.
+    filename = f'./solutions/{name}'  # The filename to which the instance is saved. The name is without extension.
     ga_instance.save(filename=filename)
 
     prediction = main_simulation(solution, save=True, plot=True)
@@ -410,6 +409,7 @@ def ga_optimization():
 if __name__ == '__main__':
     matplotlib.use('TkAgg')
     last_fitness = 0
+    name = "81#-T25-0.33C"
     # ga_optimization()
     sol = [0.725, 28]
     # sol = [0.86941868, 29.00751672]
