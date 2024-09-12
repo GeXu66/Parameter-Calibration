@@ -412,7 +412,7 @@ def ga_optimization(file_name):
 
 if __name__ == '__main__':
     matplotlib.use('TkAgg')
-    name_list = ["81#-T25-0.1C", "81#-T25-0.2C", "81#-T25-0.33C", "81#-T25-0.1C"]
+    name_list = ["81#-T25-0.1C", "81#-T25-0.2C", "81#-T25-0.33C", "81#-T25-1C"]
     last_fitness = 0
     name = name_list[0]
     ga_optimization(file_name=name)
