@@ -190,6 +190,19 @@ def main_simulation(param, save=False, plot=False):
     Positive_electrode_thermal_conductivity = min_max_func(1.04, 2.1, param[24])
     Negative_electrode_active_material_volume_fraction = min_max_func(0.372403, 0.75, param[25])
     Negative_electrode_density = min_max_func(1555, 3100, param[26])
+    Positive_electrode_specific_heat_capacity = min_max_func(700, 1270, param[27])
+    Positive_electrode_density = min_max_func(2341, 4206, param[28])
+    Negative_electrode_thermal_conductivity = min_max_func(1.04, 1.7, param[29])
+    Cation_transference_number = min_max_func(0.25, 0.4, param[30])
+    Positive_current_collector_thermal_conductivity = min_max_func(158, 238, param[31])
+    Negative_current_collector_thermal_conductivity = min_max_func(267, 401, param[32])
+    Separator_Bruggeman_coefficient = min_max_func(1.5, 2, param[33])
+    Maximum_concentration_in_negative_electrode = min_max_func(24983, 33133, param[34])
+    Positive_current_collector_density = min_max_func(2700, 3490, param[35])
+    Negative_current_collector_density = min_max_func(8933, 11544, param[36])
+    Positive_current_collector_conductivity = min_max_func(35500000, 37800000, param[37])
+    Negative_current_collector_conductivity = min_max_func(58411000, 59600000, param[38])
+    Negative_electrode_porosity = min_max_func(0.25, 0.5, param[39])
 
     # print("electrode_height:", electrode_height)
     # print("electrode_width", electrode_width)
@@ -251,6 +264,20 @@ def main_simulation(param, save=False, plot=False):
         "Positive electrode thermal conductivity [W.m-1.K-1]": Positive_electrode_thermal_conductivity,
         "Negative electrode active material volume fraction": Negative_electrode_active_material_volume_fraction,
         "Negative electrode density [kg.m-3]": Negative_electrode_density,
+        "Positive electrode specific heat capacity [J.kg-1.K-1]": Positive_electrode_specific_heat_capacity,
+        "Positive electrode density [kg.m-3]": Positive_electrode_density,
+        "Negative electrode thermal conductivity [W.m-1.K-1]": Negative_electrode_thermal_conductivity,
+        "Cation transference number": Cation_transference_number,
+        "Positive current collector thermal conductivity [W.m-1.K-1]": Positive_current_collector_thermal_conductivity,
+        "Negative current collector thermal conductivity [W.m-1.K-1]": Negative_current_collector_thermal_conductivity,
+        "Separator Bruggeman coefficient (electrolyte)": Separator_Bruggeman_coefficient,
+        "Maximum concentration in negative electrode [mol.m-3]": Maximum_concentration_in_negative_electrode,
+        "Positive current collector density [kg.m-3]": Positive_current_collector_density,
+        "Negative current collector density [kg.m-3]": Negative_current_collector_density,
+        "Positive current collector conductivity [S.m-1]": Positive_current_collector_conductivity,
+        "Negative current collector conductivity [S.m-1]": Negative_current_collector_conductivity,
+        "Negative electrode porosity": Negative_electrode_porosity,
+
     }
     # Update the parameter value
     parameter_values.update(param_dict, check_already_exists=False)
@@ -340,7 +367,7 @@ def min_max_func(low, high, norm_value):
 
 
 def ga_optimization(file_name):
-    num_genes = 27
+    num_genes = 40
     num_generations = 200  # Number of generations.
     num_parents_mating = 20  # Number of solutions to be selected as parents in the mating pool.
     sol_per_pop = 40  # Number of solutions in the population.
@@ -373,6 +400,19 @@ def ga_optimization(file_name):
         {'low': 0, 'high': 1},  # Positive electrode thermal conductivity
         {'low': 0, 'high': 1},  # Negative electrode active material volume fraction
         {'low': 0, 'high': 1},  # Negative electrode density
+        {'low': 0, 'high': 1},  # Positive_electrode_specific_heat_capacity
+        {'low': 0, 'high': 1},  # Positive_electrode_density
+        {'low': 0, 'high': 1},  # Negative_electrode_thermal_conductivity
+        {'low': 0, 'high': 1},  # Cation_transference_number
+        {'low': 0, 'high': 1},  # Positive_current_collector_thermal_conductivity
+        {'low': 0, 'high': 1},  # Negative_current_collector_thermal_conductivity
+        {'low': 0, 'high': 1},  # Separator_Bruggeman_coefficient
+        {'low': 0, 'high': 1},  # Maximum_concentration_in_negative_electrode
+        {'low': 0, 'high': 1},  # Positive_current_collector_density
+        {'low': 0, 'high': 1},  # Negative_current_collector_density
+        {'low': 0, 'high': 1},  # Positive_current_collector_conductivity
+        {'low': 0, 'high': 1},  # Negative_current_collector_conductivity
+        {'low': 0, 'high': 1},  # Negative_electrode_porosity
     ]
 
     ga_instance = pygad.GA(num_generations=num_generations,
@@ -415,7 +455,10 @@ if __name__ == '__main__':
     name_list = ["81#-T25-0.1C", "81#-T25-0.2C", "81#-T25-0.33C", "81#-T25-1C"]
     last_fitness = 0
     name = name_list[0]
-    ga_optimization(file_name=name)
-    # sol = [0.725, 28]
-    # # sol = [0.86941868, 29.00751672]
-    # main_simulation(sol, save=True, plot=True)
+    train = False
+    if train:
+        ga_optimization(file_name=name)
+    else:
+        sol_name = f'./solutions/{name}.pkl'
+        loaded_ga_instance = pygad.load(filename=sol_name)
+        # main_simulation(sol, save=True, plot=True)
