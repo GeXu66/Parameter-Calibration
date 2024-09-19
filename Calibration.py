@@ -7,7 +7,8 @@ import pandas as pd
 import pygad
 from scipy.interpolate import interp1d
 import multiprocessing
-from matplotlib import cm, colors, colormaps
+import os
+import argparse
 
 
 def plot_time_vs_voltage(file_path, time_simulation, voltage_simulation):
@@ -204,13 +205,11 @@ def main_simulation(param, save=False, plot=False):
     Negative_current_collector_conductivity = min_max_func(58411000, 59600000, param[38])
     Negative_electrode_porosity = min_max_func(0.25, 0.5, param[39])
 
-    # print("electrode_height:", electrode_height)
-    # print("electrode_width", electrode_width)
     param_list = ["Ai2020", "Chen2020", "Prada2013"]
     pybamm.set_logging_level("NOTICE")
-    file = f"./bat_data/{name}.csv"
-    discharge_cur = float(name.split("-")[-1].replace("C", ""))
-    temperature = int(name.split("-")[1].replace("T", ""))
+    file = f"./bat_data/{filename}.csv"
+    discharge_cur = float(filename.split("-")[-1].replace("C", ""))
+    temperature = int(filename.split("-")[1].replace("T", ""))
     time_max, voltage_max, voltage_min, capacity = read_file(file_name=file)
     cycle_number = 1
     min_voltage = voltage_min
@@ -292,25 +291,10 @@ def main_simulation(param, save=False, plot=False):
     time_resampled, time_voltage_simulation_resampled, time_voltage_resampled, time_rmse_value = compute_time_discharge(sol=sol, file_path=file)
     if plot:
         # plot_soc_discharge(soc_resampled, soc_voltage_simulation_resampled, soc_voltage_resampled, soc_rmse_value)
-        plot_time_discharge(time_resampled, time_voltage_simulation_resampled, time_voltage_resampled, time_rmse_value, name)
+        plot_time_discharge(time_resampled, time_voltage_simulation_resampled, time_voltage_resampled, time_rmse_value, filename)
     if save:
         df = pd.DataFrame({"real_time": time_resampled, "real_voltage": time_voltage_resampled, "simu_time": time_resampled, "simu_voltage": time_voltage_simulation_resampled})
-        df.to_csv(f"./simu_data/exp_{name}.csv", index=False, sep=",")
-    # soc_init = 1
-    # # Extract the time and voltage
-    # soc_simulation = (soc_init - sol["Discharge capacity [A.h]"].entries / 280) * 100
-    # output_variables = [
-    #     "Voltage [V]",
-    #     "X-averaged cell temperature [K]",
-    #     "Cell temperature [K]",
-    #     "Resistance [Ohm]",
-    # ]
-    # fig, ax = plt.subplots()
-    # ax.plot(soc_simulation)
-    # pybamm.dynamic_plot(sol, output_variables)
-    # time_simulation = sol["Time [s]"].entries
-    # voltage_simulation = sol["Voltage [V]"].entries
-    # plot_time_vs_voltage("./Huaiwei_data/data.csv", time_simulation, voltage_simulation)
+        df.to_csv(f"./simu_data/exp_{filename}.csv", index=False, sep=",")
 
     return time_rmse_value
 
@@ -427,7 +411,7 @@ def ga_optimization(file_name):
 
     # Running the GA to optimize the parameters of the function.
     ga_instance.run()
-    ga_instance.plot_fitness()
+    # ga_instance.plot_fitness()
 
     # Returning the details of the best solution.
     solution, solution_fitness, solution_idx = ga_instance.best_solution(ga_instance.last_generation_fitness)
@@ -439,7 +423,7 @@ def ga_optimization(file_name):
     filename = f'./solutions/{file_name}'  # The filename to which the instance is saved. The name is without extension.
     ga_instance.save(filename=filename)
 
-    prediction = main_simulation(solution, save=True, plot=True)
+    prediction = main_simulation(solution, save=True, plot=False)
     print(f"Predicted output based on the best solution : {prediction}")
 
     if ga_instance.best_solution_generation != -1:
@@ -451,14 +435,18 @@ def ga_optimization(file_name):
 
 
 if __name__ == '__main__':
-    matplotlib.use('TkAgg')
-    name_list = ["81#-T25-0.1C", "81#-T25-0.2C", "81#-T25-0.33C", "81#-T25-1C"]
+    if os.name == 'nt':
+        matplotlib.use('TkAgg')
+    parser = argparse.ArgumentParser(description="Run GA optimization or load solution.")
+    parser.add_argument('--train', action='store_true', help='Train the model.')
+    parser.add_argument('--filename', type=str, choices=["81#-T25-0.1C", "81#-T25-0.2C", "81#-T25-0.33C", "81#-T25-1C"], required=True, help='Filename for the GA optimization or solution.')
+    args = parser.parse_args()
     last_fitness = 0
-    name = name_list[0]
-    train = False
-    if train:
-        ga_optimization(file_name=name)
+    filename = args.filename
+    if args.train:
+        ga_optimization(file_name=filename)
     else:
-        sol_name = f'./solutions/{name}.pkl'
+        sol_name = f'./solutions/{filename}.pkl'
         loaded_ga_instance = pygad.load(filename=sol_name)
-        # main_simulation(sol, save=True, plot=True)
+        solution, solution_fitness, solution_idx = loaded_ga_instance.best_solution(loaded_ga_instance.last_generation_fitness)
+        main_simulation(solution, save=True, plot=True)
