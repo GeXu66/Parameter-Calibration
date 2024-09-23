@@ -7,8 +7,7 @@ import pandas as pd
 import pygad
 from scipy.interpolate import interp1d
 import multiprocessing
-import os
-import argparse
+from matplotlib import cm, colors, colormaps
 
 
 def plot_time_vs_voltage(file_path, time_simulation, voltage_simulation):
@@ -205,11 +204,13 @@ def main_simulation(param, save=False, plot=False):
     Negative_current_collector_conductivity = min_max_func(58411000, 59600000, param[38])
     Negative_electrode_porosity = min_max_func(0.25, 0.5, param[39])
 
+    # print("electrode_height:", electrode_height)
+    # print("electrode_width", electrode_width)
     param_list = ["Ai2020", "Chen2020", "Prada2013"]
     pybamm.set_logging_level("NOTICE")
-    file = f"./bat_data/{filename}.csv"
-    discharge_cur = float(filename.split("-")[-1].replace("C", ""))
-    temperature = int(filename.split("-")[1].replace("T", ""))
+    file = f"./bat_data/{name}.csv"
+    discharge_cur = float(name.split("-")[-1].replace("C", ""))
+    temperature = int(name.split("-")[1].replace("T", ""))
     time_max, voltage_max, voltage_min, capacity = read_file(file_name=file)
     cycle_number = 1
     min_voltage = voltage_min
@@ -291,10 +292,10 @@ def main_simulation(param, save=False, plot=False):
     time_resampled, time_voltage_simulation_resampled, time_voltage_resampled, time_rmse_value = compute_time_discharge(sol=sol, file_path=file)
     if plot:
         # plot_soc_discharge(soc_resampled, soc_voltage_simulation_resampled, soc_voltage_resampled, soc_rmse_value)
-        plot_time_discharge(time_resampled, time_voltage_simulation_resampled, time_voltage_resampled, time_rmse_value, filename)
+        plot_time_discharge(time_resampled, time_voltage_simulation_resampled, time_voltage_resampled, time_rmse_value, name)
     if save:
         df = pd.DataFrame({"real_time": time_resampled, "real_voltage": time_voltage_resampled, "simu_time": time_resampled, "simu_voltage": time_voltage_simulation_resampled})
-        df.to_csv(f"./simu_data/exp_{filename}.csv", index=False, sep=",")
+        df.to_csv(f"./simu_data/exp_{name}.csv", index=False, sep=",")
 
     return time_rmse_value
 
@@ -411,7 +412,7 @@ def ga_optimization(file_name):
 
     # Running the GA to optimize the parameters of the function.
     ga_instance.run()
-    # ga_instance.plot_fitness()
+    ga_instance.plot_fitness()
 
     # Returning the details of the best solution.
     solution, solution_fitness, solution_idx = ga_instance.best_solution(ga_instance.last_generation_fitness)
@@ -423,7 +424,7 @@ def ga_optimization(file_name):
     filename = f'./solutions/{file_name}'  # The filename to which the instance is saved. The name is without extension.
     ga_instance.save(filename=filename)
 
-    prediction = main_simulation(solution, save=True, plot=False)
+    prediction = main_simulation(solution, save=True, plot=True)
     print(f"Predicted output based on the best solution : {prediction}")
 
     if ga_instance.best_solution_generation != -1:
@@ -435,18 +436,14 @@ def ga_optimization(file_name):
 
 
 if __name__ == '__main__':
-    if os.name == 'nt':
-        matplotlib.use('TkAgg')
-    parser = argparse.ArgumentParser(description="Run GA optimization or load solution.")
-    parser.add_argument('--train', action='store_true', help='Train the model.')
-    parser.add_argument('--filename', type=str, choices=["81#-T25-0.1C", "81#-T25-0.2C", "81#-T25-0.33C", "81#-T25-1C"], required=True, help='Filename for the GA optimization or solution.')
-    args = parser.parse_args()
+    matplotlib.use('TkAgg')
+    name_list = ["81#-T25-0.1C", "81#-T25-0.2C", "81#-T25-0.33C", "81#-T25-1C"]
     last_fitness = 0
-    filename = args.filename
-    if args.train:
-        ga_optimization(file_name=filename)
+    name = name_list[1]
+    train = True
+    if train:
+        ga_optimization(file_name=name)
     else:
-        sol_name = f'./solutions/{filename}.pkl'
+        sol_name = f'./solutions/{name}.pkl'
         loaded_ga_instance = pygad.load(filename=sol_name)
-        solution, solution_fitness, solution_idx = loaded_ga_instance.best_solution(loaded_ga_instance.last_generation_fitness)
-        main_simulation(solution, save=True, plot=True)
+        # main_simulation(sol, save=True, plot=True)
