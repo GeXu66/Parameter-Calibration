@@ -159,7 +159,7 @@ def read_file(file_name):
     data = pd.read_csv(file_name)
     time_max = data['time'].values[-1]
     voltage_max = data['V'].values[0]
-    voltage_min = data['V'].values[-1]
+    voltage_min = data['V'].values[-1] - 1
     capacity = data['Ah'].values[-1]
     return time_max, voltage_max, voltage_min, capacity
 
