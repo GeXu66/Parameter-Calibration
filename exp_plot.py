@@ -1,9 +1,11 @@
 import pandas as pd
+import matplotlib
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error
 import numpy as np
 
 if __name__ == '__main__':
+    matplotlib.use('TkAgg')
     # 定义文件名列表
     file_names = [
         'exp_81#-T25-0.1C.csv',

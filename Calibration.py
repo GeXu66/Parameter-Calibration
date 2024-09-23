@@ -5,6 +5,8 @@ import matplotlib
 import matplotlib.pyplot as plt
 import pandas as pd
 import pygad
+import os
+import argparse
 from scipy.interpolate import interp1d
 import multiprocessing
 from matplotlib import cm, colors, colormaps
@@ -439,9 +441,12 @@ if __name__ == '__main__':
     matplotlib.use('TkAgg')
     name_list = ["81#-T25-0.1C", "81#-T25-0.2C", "81#-T25-0.33C", "81#-T25-1C"]
     last_fitness = 0
-    name = name_list[1]
-    train = True
-    if train:
+    parser = argparse.ArgumentParser(description="Run GA optimization or load solution.")
+    parser.add_argument('--train', action='store_true', help='Train the model.')
+    parser.add_argument('--filename', type=str, choices=["81#-T25-0.1C", "81#-T25-0.2C", "81#-T25-0.33C", "81#-T25-1C"], required=True, help='Filename for the GA optimization or solution.')
+    args = parser.parse_args()
+    name = args.filename
+    if args.train:
         ga_optimization(file_name=name)
     else:
         sol_name = f'./solutions/{name}.pkl'
