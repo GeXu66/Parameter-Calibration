@@ -165,6 +165,16 @@ def read_file(file_name):
 
 
 def main_simulation(param, save=False, plot=False):
+    param_list = ["Ai2020", "Chen2020", "Prada2013"]
+    pybamm.set_logging_level("NOTICE")
+    file = f"./bat_data/{name}.csv"
+    discharge_cur = float(name.split("-")[-1].replace("C", ""))
+    temperature = int(name.split("-")[1].replace("T", ""))
+    time_max, voltage_max, voltage_min, capacity = read_file(file_name=file)
+    cycle_number = 1
+    min_voltage = voltage_min
+    max_voltage = voltage_max
+
     electrode_height = min_max_func(0.6, 1, param[0])
     electrode_width = min_max_func(25, 30, param[1])
     Negative_electrode_conductivity = min_max_func(14, 215, param[2])
@@ -205,19 +215,8 @@ def main_simulation(param, save=False, plot=False):
     Positive_current_collector_conductivity = min_max_func(35500000, 37800000, param[37])
     Negative_current_collector_conductivity = min_max_func(58411000, 59600000, param[38])
     Negative_electrode_porosity = min_max_func(0.25, 0.5, param[39])
-
-    # print("electrode_height:", electrode_height)
-    # print("electrode_width", electrode_width)
-    param_list = ["Ai2020", "Chen2020", "Prada2013"]
-    pybamm.set_logging_level("NOTICE")
-    file = f"./bat_data/{name}.csv"
-    discharge_cur = float(name.split("-")[-1].replace("C", ""))
-    temperature = int(name.split("-")[1].replace("T", ""))
-    time_max, voltage_max, voltage_min, capacity = read_file(file_name=file)
-    cycle_number = 1
-    min_voltage = voltage_min
-    # 3.3107
-    max_voltage = voltage_max
+    min_voltage = min_max_func(min_voltage - 1.5, min_voltage + 0.5, param[40])
+    max_voltage = min_max_func(max_voltage - 0.5, max_voltage + 1.5, param[41])
     exp = pybamm.Experiment(
         [(
             f"Discharge at {discharge_cur} C for {time_max} seconds",  # ageing cycles
@@ -354,7 +353,7 @@ def min_max_func(low, high, norm_value):
 
 
 def ga_optimization(file_name):
-    num_genes = 40
+    num_genes = 42
     num_generations = 200  # Number of generations.
     num_parents_mating = 20  # Number of solutions to be selected as parents in the mating pool.
     sol_per_pop = 40  # Number of solutions in the population.
@@ -400,6 +399,8 @@ def ga_optimization(file_name):
         {'low': 0, 'high': 1},  # Positive_current_collector_conductivity
         {'low': 0, 'high': 1},  # Negative_current_collector_conductivity
         {'low': 0, 'high': 1},  # Negative_electrode_porosity
+        {'low': 0, 'high': 1},  # Min voltage
+        {'low': 0, 'high': 1},  # Max voltage
     ]
 
     ga_instance = pygad.GA(num_generations=num_generations,
@@ -451,4 +452,5 @@ if __name__ == '__main__':
     else:
         sol_name = f'./solutions/{name}.pkl'
         loaded_ga_instance = pygad.load(filename=sol_name)
-        # main_simulation(sol, save=True, plot=True)
+        solution, solution_fitness, solution_idx = loaded_ga_instance.best_solution(loaded_ga_instance.last_generation_fitness)
+        main_simulation(solution, save=True, plot=True)
