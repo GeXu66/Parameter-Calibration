@@ -6,9 +6,12 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pygad
 import os
+import json
 import argparse
 from scipy.interpolate import interp1d
 import multiprocessing
+from skopt import gp_minimize
+from skopt.space import Real
 from matplotlib import cm, colors, colormaps
 
 
@@ -151,7 +154,7 @@ def plot_time_discharge(time_resampled, voltage_simulation_resampled, voltage_re
     plt.grid(True)
     plt.legend()
     plt.tight_layout()
-    fig.savefig(f"./simu_fig/{name}.png")
+    fig.savefig(f"./simu_fig/{subdir_name}/{name}.png")
     plt.show()
 
 
@@ -296,7 +299,7 @@ def main_simulation(param, save=False, plot=False):
         plot_time_discharge(time_resampled, time_voltage_simulation_resampled, time_voltage_resampled, time_rmse_value, name)
     if save:
         df = pd.DataFrame({"real_time": time_resampled, "real_voltage": time_voltage_resampled, "simu_time": time_resampled, "simu_voltage": time_voltage_simulation_resampled})
-        df.to_csv(f"./simu_data/exp_{name}.csv", index=False, sep=",")
+        df.to_csv(f"./simu_data/{subdir_name}/exp_{name}.csv", index=False, sep=",")
 
     return time_rmse_value
 
@@ -337,6 +340,15 @@ def fitness_func(ga_instance, solution, solution_idx):
     # fitness = -np.log(time_rmse_value)
     print("RMSE (mV):", time_rmse_value * 1000)
     print("fitness:", fitness)
+    return fitness
+
+
+def Bayes_func(solution):
+    time_rmse_value = run_with_timeout(solution)
+    fitness = time_rmse_value ** 2
+    print("Norm Solution Value", solution)
+    # fitness = -np.log(time_rmse_value)
+    print("RMSE (mV):", time_rmse_value * 1000)
     return fitness
 
 
@@ -424,7 +436,7 @@ def ga_optimization(file_name):
     print(f"Index of the best solution : {solution_idx}")
 
     # Saving the GA instance.
-    filename = f'./solutions/{file_name}'  # The filename to which the instance is saved. The name is without extension.
+    filename = f'./solutions/{subdir_name}/{file_name}'  # The filename to which the instance is saved. The name is without extension.
     ga_instance.save(filename=filename)
 
     prediction = main_simulation(solution, save=True, plot=True)
@@ -438,17 +450,49 @@ def ga_optimization(file_name):
     # loaded_ga_instance.plot_fitness()
 
 
+def bayes_optimization(file_name):
+    space = [Real(0, 1) for _ in range(42)]
+    # 运行贝叶斯优化
+    result = gp_minimize(
+        func=Bayes_func,  # 目标函数
+        dimensions=space,  # 搜索空间
+        acq_func="gp_hedge",
+        n_calls=3000,  # 优化迭代次数
+        random_state=42,  # 随机种子
+        n_jobs=-1,
+    )
+    # 输出结果
+    print("最佳参数值:", result.x)
+    print("最小RMSE:", result.fun)
+    prediction = main_simulation(result.x, save=True, plot=True)
+    print(f"Predicted output based on the best solution : {prediction}")
+    output_data = {
+        "best_parameters": result.x,
+        "best_function_value": result.fun,
+        "parameter_history": result.x_iters,
+        "function_value_history": result.func_vals.tolist()
+    }
+
+    with open(f"./solutions/{subdir_name}/{file_name}.json", "w") as f:
+        json.dump(output_data, f)
+
+
 if __name__ == '__main__':
-    matplotlib.use('TkAgg')
+    # matplotlib.use('TkAgg')
     name_list = ["81#-T25-0.1C", "81#-T25-0.2C", "81#-T25-0.33C", "81#-T25-1C"]
     last_fitness = 0
     parser = argparse.ArgumentParser(description="Run GA optimization or load solution.")
     parser.add_argument('--train', action='store_true', help='Train the model.')
-    parser.add_argument('--filename', type=str, choices=["81#-T25-0.1C", "81#-T25-0.2C", "81#-T25-0.33C", "81#-T25-1C"], required=True, help='Filename for the GA optimization or solution.')
+    parser.add_argument('--filename', type=str, choices=["81#-T25-0.1C", "81#-T25-0.2C", "81#-T25-0.33C", "81#-T25-1C"], required=True, help='Filename for the optimization or solution.')
+    parser.add_argument('--method', type=str, choices=["GA", "Bayes"], required=True, help='Optimization Method.')
     args = parser.parse_args()
     name = args.filename
+    subdir_name = args.method
     if args.train:
-        ga_optimization(file_name=name)
+        if args.method == "GA":
+            ga_optimization(file_name=name)
+        else:
+            bayes_optimization(file_name=name)
     else:
         sol_name = f'./solutions/{name}.pkl'
         loaded_ga_instance = pygad.load(filename=sol_name)

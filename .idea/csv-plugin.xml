@@ -52,6 +52,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\simu_data\exp_81#-T25-1C.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
       </map>
     </option>
   </component>
