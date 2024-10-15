@@ -2,6 +2,7 @@ import pybamm
 import numpy as np
 from sklearn.metrics import mean_squared_error
 import matplotlib
+from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 import pandas as pd
 import pygad
@@ -343,7 +344,7 @@ def fitness_func(ga_instance, solution, solution_idx):
     return fitness
 
 
-def Bayes_func(solution):
+def obj_func(solution):
     time_rmse_value = run_with_timeout(solution)
     fitness = time_rmse_value ** 2
     print("Norm Solution Value", solution)
@@ -454,7 +455,7 @@ def bayes_optimization(file_name):
     space = [Real(0, 1) for _ in range(42)]
     # 运行贝叶斯优化
     result = gp_minimize(
-        func=Bayes_func,  # 目标函数
+        func=obj_func,  # 目标函数
         dimensions=space,  # 搜索空间
         acq_func="gp_hedge",
         n_calls=3000,  # 优化迭代次数
@@ -477,6 +478,36 @@ def bayes_optimization(file_name):
         json.dump(output_data, f)
 
 
+def local_optimization(file_name):
+    space = [Real(0, 1) for _ in range(42)]  # 定义搜索空间，这里假设每个维度有42个可能的值
+    initial_guess = np.random.rand(42)  # 随机生成一个初始猜测值
+
+    # 运行局部优化
+    result = minimize(
+        fun=obj_func,  # 目标函数
+        x0=initial_guess,  # 初始猜测值
+        method='L-BFGS-B',  # 使用L-BFGS-B算法
+        bounds=space,  # 搜索空间的边界
+        options={'maxiter': 3000, 'disp': True},  # 设置最大迭代次数和显示进度
+    )
+
+    # 输出结果
+    print("最佳参数值:", result.x)
+    print("最小RMSE:", result.fun)
+    prediction = main_simulation(result.x, save=True, plot=True)
+    print(f"Predicted output based on the best solution : {prediction}")
+
+    output_data = {
+        "best_parameters": result.x,
+        "best_function_value": result.fun,
+        "parameter_history": result.x,
+        "function_value_history": [obj_func(x) for x in result.x]
+    }
+
+    with open(f"./solutions/{subdir_name}/{file_name}.json", "w") as f:
+        json.dump(output_data, f)
+
+
 if __name__ == '__main__':
     # matplotlib.use('TkAgg')
     name_list = ["81#-T25-0.1C", "81#-T25-0.2C", "81#-T25-0.33C", "81#-T25-1C"]
@@ -484,7 +515,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Run GA optimization or load solution.")
     parser.add_argument('--train', action='store_true', help='Train the model.')
     parser.add_argument('--filename', type=str, choices=["81#-T25-0.1C", "81#-T25-0.2C", "81#-T25-0.33C", "81#-T25-1C"], required=True, help='Filename for the optimization or solution.')
-    parser.add_argument('--method', type=str, choices=["GA", "Bayes"], required=True, help='Optimization Method.')
+    parser.add_argument('--method', type=str, choices=["GA", "Bayes", "Local"], required=True, help='Optimization Method.')
     args = parser.parse_args()
     name = args.filename
     subdir_name = args.method

@@ -13,7 +13,7 @@ if __name__ == '__main__':
         'exp_81#-T25-0.33C.csv',
         'exp_81#-T25-1C.csv'
     ]
-    directory_path = "simu_data/"
+    directory_path = "simu_data/GA/"
     # 初始化一个空的DataFrame来存储所有数据
     all_data = pd.DataFrame()
     # 遍历文件名列表，读取每个文件
