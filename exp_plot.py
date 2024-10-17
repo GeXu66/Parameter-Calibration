@@ -13,7 +13,8 @@ if __name__ == '__main__':
         'exp_81#-T25-0.33C.csv',
         'exp_81#-T25-1C.csv'
     ]
-    directory_path = "simu_data/GA/"
+    method = "GA"
+    directory_path = f"simu_data/{method}/"
     # 初始化一个空的DataFrame来存储所有数据
     all_data = pd.DataFrame()
     # 遍历文件名列表，读取每个文件
@@ -25,10 +26,10 @@ if __name__ == '__main__':
         # 将数据添加到总的DataFrame中
         all_data = pd.concat([all_data, data], ignore_index=True)
     # 绘制图表
-    plt.figure()  # 设置图表大小
     # 计算RMSE
     rmse_values = []
     # 遍历每个唯一的实验编号，绘制每个实验的曲线
+    fig, ax = plt.subplots(1, 1)
     for experiment in all_data['experiment'].unique():
         subset = all_data[all_data['experiment'] == experiment]
         # 计算90%的数据点位置
@@ -64,4 +65,4 @@ if __name__ == '__main__':
     # 显示图表
     plt.tight_layout()
     plt.show()
-
+    fig.savefig(f"all_plot/{method}.png", dpi=300)

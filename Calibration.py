@@ -488,7 +488,7 @@ def local_optimization(file_name):
         x0=initial_guess,  # 初始猜测值
         method='L-BFGS-B',  # 使用L-BFGS-B算法
         bounds=space,  # 搜索空间的边界
-        options={'maxiter': 3000, 'disp': True},  # 设置最大迭代次数和显示进度
+        options={'maxiter': 1000, 'disp': True},  # 设置最大迭代次数和显示进度
     )
 
     # 输出结果
