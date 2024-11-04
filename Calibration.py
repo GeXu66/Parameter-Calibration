@@ -170,7 +170,7 @@ def read_file(file_name):
 
 def main_simulation(param, save=False, plot=False):
     param_list = ["Ai2020", "Chen2020", "Prada2013"]
-    pybamm.set_logging_level("NOTICE")
+    # pybamm.set_logging_level("NOTICE")
     file = f"./bat_data/{name}.csv"
     discharge_cur = float(name.split("-")[-1].replace("C", ""))
     temperature = int(name.split("-")[1].replace("T", ""))
@@ -346,10 +346,10 @@ def fitness_func(ga_instance, solution, solution_idx):
 
 def obj_func(solution):
     time_rmse_value = run_with_timeout(solution)
-    fitness = time_rmse_value ** 2
-    print("Norm Solution Value", solution)
+    fitness = time_rmse_value
+    print("\033[31mNorm Solution Value:\033[0m", solution)
     # fitness = -np.log(time_rmse_value)
-    print("RMSE (mV):", time_rmse_value * 1000)
+    print("\033[31mRMSE (mV):\033[0m", time_rmse_value * 1000)
     return fitness
 
 
@@ -446,6 +446,14 @@ def ga_optimization(file_name):
     if ga_instance.best_solution_generation != -1:
         print(f"Best fitness value reached after {ga_instance.best_solution_generation} generations.")
 
+    output_data = {
+        "best_parameters": np.array(solution),
+        "best_function_value": prediction,
+    }
+
+    with open(f"./solutions/{subdir_name}/{file_name}.json", "w") as f:
+        json.dump(output_data, f)
+
     # Loading the saved GA instance.
     # loaded_ga_instance = pygad.load(filename=filename)
     # loaded_ga_instance.plot_fitness()
@@ -458,7 +466,7 @@ def bayes_optimization(file_name):
         func=obj_func,  # 目标函数
         dimensions=space,  # 搜索空间
         acq_func="gp_hedge",
-        n_calls=3000,  # 优化迭代次数
+        n_calls=500,  # 优化迭代次数
         random_state=42,  # 随机种子
         n_jobs=-1,
     )
@@ -470,25 +478,23 @@ def bayes_optimization(file_name):
     output_data = {
         "best_parameters": result.x,
         "best_function_value": result.fun,
-        "parameter_history": result.x_iters,
-        "function_value_history": result.func_vals.tolist()
     }
 
     with open(f"./solutions/{subdir_name}/{file_name}.json", "w") as f:
-        json.dump(output_data, f)
+        json.dump(output_data, f, cls=NumpyEncoder)
 
 
 def local_optimization(file_name):
-    space = [Real(0, 1) for _ in range(42)]  # 定义搜索空间，这里假设每个维度有42个可能的值
+    space = [(0, 1) for _ in range(42)]  # 定义搜索空间，这里假设每个维度有42个可能的值
     initial_guess = np.random.rand(42)  # 随机生成一个初始猜测值
 
     # 运行局部优化
     result = minimize(
         fun=obj_func,  # 目标函数
         x0=initial_guess,  # 初始猜测值
-        method='L-BFGS-B',  # 使用L-BFGS-B算法
+        method='trust-constr',  # 使用L-BFGS-B算法
         bounds=space,  # 搜索空间的边界
-        options={'maxiter': 1000, 'disp': True},  # 设置最大迭代次数和显示进度
+        options={'maxiter': 6, 'disp': True},  # 设置最大迭代次数和显示进度
     )
 
     # 输出结果
@@ -500,12 +506,17 @@ def local_optimization(file_name):
     output_data = {
         "best_parameters": result.x,
         "best_function_value": result.fun,
-        "parameter_history": result.x,
-        "function_value_history": [obj_func(x) for x in result.x]
     }
 
     with open(f"./solutions/{subdir_name}/{file_name}.json", "w") as f:
-        json.dump(output_data, f)
+        json.dump(output_data, f, cls=NumpyEncoder)
+
+
+class NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return super().default(obj)
 
 
 if __name__ == '__main__':
@@ -522,10 +533,13 @@ if __name__ == '__main__':
     if args.train:
         if args.method == "GA":
             ga_optimization(file_name=name)
+        elif args.method == "Local":
+            local_optimization(file_name=name)
         else:
             bayes_optimization(file_name=name)
     else:
-        sol_name = f'./solutions/{name}.pkl'
+        sol_name = f'./solutions/{args.method}/{name}'
         loaded_ga_instance = pygad.load(filename=sol_name)
         solution, solution_fitness, solution_idx = loaded_ga_instance.best_solution(loaded_ga_instance.last_generation_fitness)
+        print("best solution:", solution)
         main_simulation(solution, save=True, plot=True)

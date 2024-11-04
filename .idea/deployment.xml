@@ -11,6 +11,14 @@
           </mappings>
         </serverdata>
       </paths>
+      <paths name="WSL">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/Parameter-Calibration" local="$PROJECT_DIR$" web="/" />
+            <mapping local="" />
+          </mappings>
+        </serverdata>
+      </paths>
       <paths name="gx@192.168.3.114:22 password">
         <serverdata>
           <mappings>

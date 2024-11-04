@@ -12,8 +12,12 @@ if __name__ == '__main__':
         'exp_81#-T25-0.2C.csv',
         'exp_81#-T25-0.33C.csv',
         'exp_81#-T25-1C.csv'
+        # 'exp_81#MO-T25-0.1C.csv',
+        # 'exp_81#MO-T25-0.2C.csv',
+        # 'exp_81#MO-T25-0.33C.csv',
+        # 'exp_81#MO-T25-1.0C.csv'
     ]
-    method = "GA"
+    method = "Local"
     directory_path = f"simu_data/{method}/"
     # 初始化一个空的DataFrame来存储所有数据
     all_data = pd.DataFrame()

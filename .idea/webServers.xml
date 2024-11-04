@@ -9,6 +9,13 @@
           </advancedOptions>
         </fileTransfer>
       </webServer>
+      <webServer id="c4609e24-515b-47f2-ab01-3f4df7630c39" name="WSL">
+        <fileTransfer rootFolder="/home/ido" accessType="SFTP" host="192.168.1.167" port="22" sshConfigId="b389bfdb-83b7-47cb-934b-59989aefef75" sshConfig="ido@192.168.1.167:22 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
     </option>
   </component>
 </project>
