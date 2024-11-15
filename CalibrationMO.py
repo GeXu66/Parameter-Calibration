@@ -209,8 +209,8 @@ def pybamm_sim(param, min_voltage, max_voltage, discharge_cur, time_max, capacit
     Positive_current_collector_conductivity = min_max_func(35500000, 37800000, param[37])
     Negative_current_collector_conductivity = min_max_func(58411000, 59600000, param[38])
     Negative_electrode_porosity = min_max_func(0.25, 0.5, param[39])
-    min_voltage = min_max_func(min_voltage - 1.5, min_voltage + 0.5, param[40])
-    max_voltage = min_max_func(max_voltage - 0.5, max_voltage + 1.5, param[41])
+    min_voltage = min_max_func(min_voltage - 0.3, min_voltage + 0.3, param[40])
+    max_voltage = min_max_func(max_voltage - 0.3, max_voltage + 0.3, param[41])
     exp = pybamm.Experiment(
         [(
             f"Discharge at {discharge_cur} C for {time_max} seconds",  # ageing cycles
@@ -219,7 +219,11 @@ def pybamm_sim(param, min_voltage, max_voltage, discharge_cur, time_max, capacit
         )]
     )
     option = {"cell geometry": "arbitrary", "thermal": "lumped", "contact resistance": "false"}
-    model = pybamm.lithium_ion.DFN()  # Doyle-Fuller-Newman model
+    if model_type == "DFN":
+        model = pybamm.lithium_ion.DFN()  # Doyle-Fuller-Newman model
+    else:
+        model = pybamm.lithium_ion.SPM()
+
     parameter_values = pybamm.ParameterValues("Prada2013")
     param_dict = {
         "Number of electrodes connected in parallel to make a cell": 1,
@@ -307,7 +311,7 @@ def main_simulationMO(param, save=False, plot=False):
             plot_time_discharge(time_resampled, time_voltage_simulation_resampled, time_voltage_resampled, time_rmse_value, discharge_cur)
         if save:
             df = pd.DataFrame({"real_time": time_resampled, "real_voltage": time_voltage_resampled, "simu_time": time_resampled, "simu_voltage": time_voltage_simulation_resampled})
-            df.to_csv(f"./simu_data/{subdir_name}/exp_{file_name}-T{temperature}-{discharge_cur}C.csv", index=False, sep=",")
+            df.to_csv(f"./simu_data/{subdir_name}/exp_{file_name}-T{temperature}-{discharge_cur}C-{model_type}.csv", index=False, sep=",")
     return all_time_rmse
 
 
@@ -334,10 +338,15 @@ def run_with_timeout(param, timeout=15):
         return [100] * wc_num  # 超时返回 100
     # 检查返回值是否为 NaN
     result = return_dict.get('result')
-    if True in np.isnan(result):
-        return [100] * wc_num  # 发生错误或返回 NaN，返回 100
-    else:
-        return result  # 返回正常结果
+    try:
+        print("\033[31m result:\033[0m", result)
+        if True in np.isnan(result):
+            return [100] * wc_num  # 发生错误或返回 NaN，返回 100
+        else:
+            return result  # 返回正常结果
+    except Exception as e:
+        print(f"Error occurred: {e}")
+        return [100] * wc_num
 
 
 def fitness_func(ga_instance, solution, solution_idx):
@@ -373,9 +382,9 @@ def min_max_func(low, high, norm_value):
 
 def ga_optimization(file_name):
     num_genes = 42
-    num_generations = 200  # Number of generations.
+    num_generations = 300  # Number of generations.
     num_parents_mating = 20  # Number of solutions to be selected as parents in the mating pool.
-    sol_per_pop = 40  # Number of solutions in the population.
+    sol_per_pop = 30  # Number of solutions in the population.
     # define gene space
     gene_space = [
         {'low': 0, 'high': 1},  # Electrode height
@@ -430,42 +439,44 @@ def ga_optimization(file_name):
                            save_best_solutions=True,
                            fitness_func=fitness_func,
                            on_generation=on_generation,
-                           parallel_processing=32,
+                           parallel_processing=16,
                            parent_selection_type='nsga2')
 
     # Running the GA to optimize the parameters of the function.
     ga_instance.run()
     ga_instance.plot_fitness(label=['Obj 1', 'Obj 2', 'Obj 3', 'Obj 4'])
 
-    # Returning the details of the best solution.
-    solution, solution_fitness, solution_idx = ga_instance.best_solution(ga_instance.last_generation_fitness)
-    print(f"Parameters of the best solution : {solution}")
-    print(f"Fitness value of the best solution = {solution_fitness}")
-    print(f"Index of the best solution : {solution_idx}")
+    pareto_fronts = ga_instance.pareto_fronts
+    for front_level in pareto_fronts:
+        for solution, fitness in front_level:
+            print(f"Solution: {solution}, Fitness: {fitness}")
 
+    best_solution = ga_instance.population[0]
+    print("best solution:", best_solution)
+
+    # Returning the details of the best solution.
+    # solution, solution_fitness, solution_idx = ga_instance.best_solution(ga_instance.last_generation_fitness)
+    # print(f"Parameters of the best solution : {solution}")
+    # print(f"Fitness value of the best solution = {solution_fitness}")
+    # print(f"Index of the best solution : {solution_idx}")
 
     # Saving the GA instance.
     filename = f'./solutions/{subdir_name}/{file_name}'  # The filename to which the instance is saved. The name is without extension.
     ga_instance.save(filename=filename)
 
-    prediction = main_simulationMO(solution, save=True, plot=True)
+    prediction = main_simulationMO(best_solution, save=True, plot=True)
     print(f"Predicted output based on the best solution : {prediction}")
 
     if ga_instance.best_solution_generation != -1:
         print(f"Best fitness value reached after {ga_instance.best_solution_generation} generations.")
 
     output_data = {
-        "best_parameters": solution,
+        "best_parameters": best_solution,
         "best_rmse_value": prediction,
     }
 
     with open(f"./solutions/{subdir_name}/{file_name}.json", "w") as f:
         json.dump(output_data, f, cls=NumpyEncoder)
-
-    pareto_fronts = ga_instance.pareto_fronts
-    for front_level in pareto_fronts:
-        for solution, fitness in front_level:
-            print(f"Solution: {solution}, Fitness: {fitness}")
 
     # Loading the saved GA instance.
     # loaded_ga_instance = pygad.load(filename=filename)
@@ -540,9 +551,11 @@ if __name__ == '__main__':
     parser.add_argument('--train', action='store_true', help='Train the model.')
     parser.add_argument('--filename', type=str, required=True, help='Filename for the optimization or solution.')
     parser.add_argument('--method', type=str, choices=["GA", "Bayes", "Local"], required=True, help='Optimization Method.')
+    parser.add_argument('--model', type=str, choices=["DFN", "SPM"], required=True, help='Model Type.')
     args = parser.parse_args()
     name = args.filename
-    file_name = name.split(",")[0].split("-")[0] + "MO"
+    model_type = args.model
+    file_name = name.split(",")[0].split("-")[0] + "MO" + f"-{model_type}"
     subdir_name = args.method
     wc_num = len(args.filename.split(","))
     if args.train:
@@ -570,4 +583,3 @@ if __name__ == '__main__':
             print(f"Solution Index: {solution_idx}, Solution: {solution}, Fitness: {fitness}")
             if all(abs(i) < 0.03 for i in fitness):
                 main_simulationMO(solution, save=True, plot=True)
-

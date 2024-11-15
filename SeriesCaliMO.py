@@ -223,7 +223,7 @@ def pybamm_sim(param, min_voltage, max_voltage, discharge_cur, time_max, capacit
     parameter_values = pybamm.ParameterValues("Prada2013")
     param_dict = {
         "Number of electrodes connected in parallel to make a cell": 56,
-        "Nominal cell capacity [A.h]": capacity/56,
+        "Nominal cell capacity [A.h]": capacity / 56,
         "Lower voltage cut-off [V]": min_voltage,
         "Upper voltage cut-off [V]": max_voltage,
         "Ambient temperature [K]": 273.15 + 25,
@@ -334,10 +334,15 @@ def run_with_timeout(param, timeout=15):
         return [100] * wc_num  # 超时返回 100
     # 检查返回值是否为 NaN
     result = return_dict.get('result')
-    if True in np.isnan(result):
-        return [100] * wc_num  # 发生错误或返回 NaN，返回 100
-    else:
-        return result  # 返回正常结果
+    try:
+        print("\033[31m result:\033[0m", result)
+        if True in np.isnan(result):
+            return [100] * wc_num  # 发生错误或返回 NaN，返回 100
+        else:
+            return result  # 返回正常结果
+    except Exception as e:
+        print(f"Error occurred: {e}")
+        return [100] * wc_num
 
 
 def fitness_func(ga_instance, solution, solution_idx):
@@ -373,8 +378,8 @@ def min_max_func(low, high, norm_value):
 
 def ga_optimization(file_name):
     num_genes = 42
-    num_generations = 600  # Number of generations.
-    num_parents_mating = 20  # Number of solutions to be selected as parents in the mating pool.
+    num_generations = 400  # Number of generations.
+    num_parents_mating = 30  # Number of solutions to be selected as parents in the mating pool.
     sol_per_pop = 40  # Number of solutions in the population.
     # define gene space
     gene_space = [
@@ -442,7 +447,6 @@ def ga_optimization(file_name):
     print(f"Parameters of the best solution : {solution}")
     print(f"Fitness value of the best solution = {solution_fitness}")
     print(f"Index of the best solution : {solution_idx}")
-
 
     # Saving the GA instance.
     filename = f'./solutions/{subdir_name}/{file_name}'  # The filename to which the instance is saved. The name is without extension.
@@ -570,4 +574,3 @@ if __name__ == '__main__':
             print(f"Solution Index: {solution_idx}, Solution: {solution}, Fitness: {fitness}")
             if all(abs(i) < 0.03 for i in fitness):
                 main_simulationMO(solution, save=True, plot=True)
-
