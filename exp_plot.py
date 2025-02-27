@@ -3,9 +3,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.metrics import mean_squared_error
+import re
 
 
-def draw_single_condition(file_name):
+def draw_single_condition(method, file_name):
     # 定义文件名列表
     file_names = [
         # 'exp_81#-T25-0.1C.csv',
@@ -17,7 +18,6 @@ def draw_single_condition(file_name):
         'exp_81#MOS-T25-0.33C.csv',
         'exp_81#MOS-T25-1.0C.csv'
     ]
-    method = "GA"
     directory_path = f"simu_data/{method}/"
     # 初始化一个空的DataFrame来存储所有数据
     all_data = pd.DataFrame()
@@ -76,9 +76,21 @@ def draw_single_condition(file_name):
     fig.savefig(f"all_plot/single/{method}-{file_name}.png", dpi=300)
 
 
-def draw_multi_condition(file_names):
+def extract_pattern(filename):
+    # 正则表达式模式，匹配数字后跟C
+    pattern = r'-(\d+\.?\d*C)-'
+    # 使用search方法查找匹配的字符串
+    match = re.search(pattern, filename)
+    if match:
+        # 返回匹配的字符串
+        return match.group(1)
+    else:
+        # 如果没有匹配，返回None
+        return None
+
+
+def draw_multi_condition(method, file_names):
     # 定义文件名列表
-    method = "GA"
     directory_path = f"simu_data/{method}/"
     # 初始化一个空的DataFrame来存储所有数据
     all_data = pd.DataFrame()
@@ -87,7 +99,8 @@ def draw_multi_condition(file_names):
         # 读取CSV文件
         data = pd.read_csv(directory_path + file_name)
         # 将文件名添加为新列，用于区分不同的数据集
-        data['experiment'] = file_name.split('-')[2]  # 假设文件名格式是固定的，并且实验编号在第三个'-'后面
+        # data['experiment'] = file_name.split('-')[2]  # 假设文件名格式是固定的，并且实验编号在第三个'-'后面
+        data['experiment'] = extract_pattern(file_name)
         # 将数据添加到总的DataFrame中
         all_data = pd.concat([all_data, data], ignore_index=True)
     # 绘制图表
@@ -152,13 +165,22 @@ if __name__ == '__main__':
         # 'exp_81#-T25-0.2C.csv',
         # 'exp_81#-T25-0.33C.csv',
         # 'exp_81#-T25-1C.csv'
-        'exp_81#MO-T25-0.1C.csv',
-        'exp_81#MO-T25-0.2C.csv',
-        'exp_81#MO-T25-0.33C.csv',
-        'exp_81#MO-T25-1.0C.csv'
+        # 'exp_81#MO-T25-0.1C.csv',
+        # 'exp_81#MO-T25-0.2C.csv',
+        # 'exp_81#MO-T25-0.33C.csv',
+        # 'exp_81#MO-T25-1.0C.csv'
+        # 'exp_81#MO-DFN-T25-0.1C-DFN.csv',
+        # 'exp_81#MO-DFN-T25-0.2C-DFN.csv',
+        # 'exp_81#MO-DFN-T25-0.33C-DFN.csv',
+        # 'exp_81#MO-DFN-T25-1.0C-DFN.csv'
+        'exp_81#MO-Constraint-DFN-T25-0.1C-DFN.csv',
+        'exp_81#MO-Constraint-DFN-T25-0.2C-DFN.csv',
+        'exp_81#MO-Constraint-DFN-T25-0.33C-DFN.csv',
+        'exp_81#MO-Constraint-DFN-T25-1.0C-DFN.csv'
     ]
-    draw_single_condition(file_name=file_names[0])
-    draw_single_condition(file_name=file_names[1])
-    draw_single_condition(file_name=file_names[2])
-    draw_single_condition(file_name=file_names[3])
-    draw_multi_condition(file_names)
+    method = 'Bayes'
+    draw_single_condition(method=method, file_name=file_names[0])
+    draw_single_condition(method=method, file_name=file_names[1])
+    draw_single_condition(method=method, file_name=file_names[2])
+    draw_single_condition(method=method, file_name=file_names[3])
+    draw_multi_condition(method=method, file_names=file_names)

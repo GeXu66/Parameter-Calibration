@@ -2,7 +2,7 @@
 <project version="4">
   <component name="WebServers">
     <option name="servers">
-      <webServer id="ad7fbdec-b2c9-478d-af14-3e21e5f96af3" name="SLURM">
+      <webServer id="ad7fbdec-b2c9-478d-af14-3e21e5f96af3" name="SLURM (project level)">
         <fileTransfer rootFolder="/home/gx" accessType="SFTP" host="10.11.13.93" port="22" sshConfigId="1e654dc5-90f2-4591-ae87-981edfbcd330" sshConfig="gx@10.11.13.93:22 password">
           <advancedOptions>
             <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
