@@ -17,21 +17,14 @@
             </Attribute>
           </value>
         </entry>
-        <entry key="\sensitivity\comparison_results_20241115_184142.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\sensitivity\sobol_results_20241115_184142.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
         <entry key="\simu_data\GA\exp_81#MO-DFN-T25-0.1C-DFN.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\solutions\Bayes\81#MO-Constraint-DFN-32.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />

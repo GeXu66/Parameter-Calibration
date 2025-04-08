@@ -9,8 +9,8 @@
           </advancedOptions>
         </fileTransfer>
       </webServer>
-      <webServer id="c4609e24-515b-47f2-ab01-3f4df7630c39" name="WSL">
-        <fileTransfer rootFolder="/home/ido" accessType="SFTP" host="192.168.1.167" port="22" sshConfigId="b389bfdb-83b7-47cb-934b-59989aefef75" sshConfig="ido@192.168.1.167:22 password">
+      <webServer id="c4609e24-515b-47f2-ab01-3f4df7630c39" name="SLURM zerotier">
+        <fileTransfer rootFolder="/home/gx" accessType="SFTP" host="10.244.227.160" port="22" sshConfigId="63653f47-2323-42b8-888a-cc702f408ead" sshConfig="gx@10.244.227.160:22 password">
           <advancedOptions>
             <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
           </advancedOptions>

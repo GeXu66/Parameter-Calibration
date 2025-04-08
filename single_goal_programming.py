@@ -6,7 +6,7 @@ from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 import pandas as pd
 import pygad
-import os
+import csv
 import json
 import argparse
 from scipy.interpolate import interp1d
@@ -123,49 +123,32 @@ def compute_time_discharge(sol, file_path, soc_range=(0.9, 1)):
 
 
 def pybamm_sim(param, min_voltage, max_voltage, discharge_cur, time_max, capacity, temperature, file):
-    electrode_height = min_max_func(0.01, 0.137, param[0])
-    electrode_width = min_max_func(0.2, 1.78, param[1])
-    Negative_electrode_conductivity = min_max_func(100, 215, param[2])
-    Positive_electrode_diffusivity = min_max_func(5.9e-18, 1e-14, param[3])
-    Positive_particle_radius = min_max_func(1e-8, 1e-5, param[4])
-    Initial_concentration_in_positive_electrode = min_max_func(4631, 31513, param[5])
-    Initial_concentration_in_negative_electrode = min_max_func(18081, 29866, param[6])
-    Positive_electrode_conductivity = min_max_func(0.18, 100, param[7])
-    Negative_particle_radius = min_max_func(0.0000005083, 0.0000137, param[8])
-    Negative_electrode_thickness = min_max_func(0.000036, 0.0007, param[9])
-    Total_heat_transfer_coefficient = min_max_func(5, 35, param[10])
-    Separator_density = min_max_func(397, 1017, param[11])
-    Separator_thermal_conductivity = min_max_func(0.10672, 0.34, param[12])
-    Positive_electrode_porosity = min_max_func(0.12728395, 0.4, param[13])
-    Separator_specific_heat_capacity = min_max_func(700, 1978, param[14])
-    Maximum_concentration_in_positive_electrode = min_max_func(22806, 63104, param[15])
-    Negative_electrode_Bruggeman_coefficient = min_max_func(1.5, 4, param[16])
-    Positive_electrode_Bruggeman_coefficient = min_max_func(1.5, 4, param[17])
-    Separator_porosity = min_max_func(0.39, 1, param[18])
-    Negative_current_collector_thickness = min_max_func(0.00001, 0.000025, param[19])
-    Positive_current_collector_thickness = min_max_func(0.00001, 0.000025, param[20])
-    Positive_electrode_thickness = min_max_func(0.000042, 0.0001, param[21])
-    Positive_electrode_active_material_volume_fraction = min_max_func(0.28485556, 0.665, param[22])
-    Negative_electrode_specific_heat_capacity = min_max_func(700, 1437, param[23])
-    Positive_electrode_thermal_conductivity = min_max_func(1.04, 2.1, param[24])
-    Negative_electrode_active_material_volume_fraction = min_max_func(0.372403, 0.75, param[25])
-    print(Negative_electrode_active_material_volume_fraction)
-    # Negative_electrode_density = min_max_func(1555, 3100, param[26])
-    # Positive_electrode_specific_heat_capacity = min_max_func(700, 1270, param[27])
-    # Positive_electrode_density = min_max_func(2341, 4206, param[28])
-    # Negative_electrode_thermal_conductivity = min_max_func(1.04, 1.7, param[29])
-    # Cation_transference_number = min_max_func(0.25, 0.4, param[30])
-    # Positive_current_collector_thermal_conductivity = min_max_func(158, 238, param[31])
-    # Negative_current_collector_thermal_conductivity = min_max_func(267, 401, param[32])
-    # Separator_Bruggeman_coefficient = min_max_func(1.5, 2, param[33])
-    # Maximum_concentration_in_negative_electrode = min_max_func(24983, 33133, param[34])
-    # Positive_current_collector_density = min_max_func(2700, 3490, param[35])
-    # Negative_current_collector_density = min_max_func(8933, 11544, param[36])
-    # Positive_current_collector_conductivity = min_max_func(35500000, 37800000, param[37])
-    # Negative_current_collector_conductivity = min_max_func(58411000, 59600000, param[38])
-    # Negative_electrode_porosity = min_max_func(0.25, 0.5, param[39])
-    # min_voltage = min_max_func(min_voltage - 0.3, min_voltage + 0.3, param[40])
-    # max_voltage = min_max_func(max_voltage - 0.3, max_voltage + 0.3, param[41])
+    # 根据新的参数列表定义映射范围，基于固定参数值的左右范围
+    N_parallel = min_max_func(180, 220, param[0])
+    electrode_height = min_max_func(0.17, 0.22, param[1])
+    electrode_width = min_max_func(0.15, 0.19, param[2])
+    Negative_electrode_thickness = min_max_func(80e-6, 120e-6, param[3])
+    Positive_electrode_thickness = min_max_func(90e-6, 130e-6, param[4])
+
+    Positive_electrode_active_material_volume_fraction = min_max_func(0.45, 0.6, param[5])
+    Negative_electrode_active_material_volume_fraction = min_max_func(0.48, 0.62, param[6])
+    Positive_electrode_porosity = min_max_func(0.32, 0.45, param[7])
+    Negative_electrode_porosity = min_max_func(0.32, 0.45, param[8])
+    Separator_porosity = min_max_func(0.4, 0.6, param[9])
+
+    Positive_electrode_diffusivity = min_max_func(1e-13, 1e-12, param[10])
+    Negative_electrode_diffusivity = min_max_func(1e-13, 1e-12, param[11])
+    Positive_particle_radius = min_max_func(1e-6, 4e-6, param[12])
+    Negative_particle_radius = min_max_func(2e-6, 5e-6, param[13])
+    Negative_electrode_conductivity = min_max_func(50.0, 150.0, param[14])
+    Positive_electrode_conductivity = min_max_func(30.0, 80.0, param[15])
+    Negative_electrode_Bruggeman_coefficient = min_max_func(1.2, 2.0, param[16])
+    Positive_electrode_Bruggeman_coefficient = min_max_func(1.2, 2.0, param[17])
+
+    Initial_concentration_in_positive_electrode = min_max_func(25000.0, 32000.0, param[18])
+    Initial_concentration_in_negative_electrode = min_max_func(4000.0, 6000.0, param[19])
+    Maximum_concentration_in_positive_electrode = min_max_func(45000.0, 58000.0, param[20])
+    Maximum_concentration_in_negative_electrode = min_max_func(25000.0, 35000.0, param[21])
 
     parameter_values = pybamm.ParameterValues("Prada2013")
     option = {"cell geometry": "arbitrary", "thermal": "lumped", "contact resistance": "false"}
@@ -175,72 +158,51 @@ def pybamm_sim(param, min_voltage, max_voltage, discharge_cur, time_max, capacit
         model = pybamm.lithium_ion.SPM()
     exp = pybamm.Experiment(
         [(
-            f"Discharge at {discharge_cur} C for {time_max} seconds",  # ageing cycles
-            # f"Discharge at 0.5 C until {min_voltage}V",  # ageing cycles
-            # f"Charge at 0.5 C for 1830 seconds",  # ageing cycles
+            f"Discharge at {discharge_cur} C for {time_max} seconds",
         )]
     )
-    # data = pd.read_csv(file)
-    # # 从 CSV 中提取数据列
-    # time_data = data['time'].values  # 总时间数据（秒）
-    # current_data = data['A'].values  # 电流数据（安培，负值表示放电）
-    # single_current = current_data
-    # current_interpolant = pybamm.Interpolant(time_data, single_current, pybamm.t)
-    # parameter_values["Current function [A]"] = current_interpolant
 
     param_dict = {
-        "Number of electrodes connected in parallel to make a cell": 1,
+        "Number of electrodes connected in parallel to make a cell": N_parallel,
         "Nominal cell capacity [A.h]": capacity,
-        "Lower voltage cut-off [V]": min_voltage - 0.3,
-        "Upper voltage cut-off [V]": max_voltage + 0.3,
+        "Lower voltage cut-off [V]": min_voltage - 0.1,
+        "Upper voltage cut-off [V]": max_voltage + 0.1,
         "Ambient temperature [K]": 273.15 + 25,
         "Initial temperature [K]": 273.15 + temperature,
-        # "Total heat transfer coefficient [W.m-2.K-1]": 10,
-        # "Cell cooling surface area [m2]": 0.126,
-        # "Cell volume [m3]": 0.00257839,
-        # cell
+
+        # 几何与结构参数
         "Electrode height [m]": electrode_height,
         "Electrode width [m]": electrode_width,
-        "Negative electrode conductivity [S.m-1]": Negative_electrode_conductivity,
-        "Positive electrode diffusivity [m2.s-1]": Positive_electrode_diffusivity,
-        "Positive particle radius [m]": Positive_particle_radius,
-        "Initial concentration in positive electrode [mol.m-3]": Initial_concentration_in_positive_electrode,
-        "Initial concentration in negative electrode [mol.m-3]": Initial_concentration_in_negative_electrode,
-        "Positive electrode conductivity [S.m-1]": Positive_electrode_conductivity,
-        "Negative particle radius [m]": Negative_particle_radius,
         "Negative electrode thickness [m]": Negative_electrode_thickness,
-        "Total heat transfer coefficient [W.m-2.K-1]": Total_heat_transfer_coefficient,
-        "Separator density [kg.m-3]": Separator_density,
-        "Separator thermal conductivity [W.m-1.K-1]": Separator_thermal_conductivity,
+        "Positive electrode thickness [m]": Positive_electrode_thickness,
+        "Negative current collector thickness [m]": 15e-6,  # 固定值
+        "Positive current collector thickness [m]": 20e-6,  # 固定值
+
+        # 材料组成参数
+        "Positive electrode active material volume fraction": Positive_electrode_active_material_volume_fraction,
+        "Negative electrode active material volume fraction": Negative_electrode_active_material_volume_fraction,
         "Positive electrode porosity": Positive_electrode_porosity,
-        "Separator specific heat capacity [J.kg-1.K-1]": Separator_specific_heat_capacity,
-        "Maximum concentration in positive electrode [mol.m-3]": Maximum_concentration_in_positive_electrode,
+        "Negative electrode porosity": Negative_electrode_porosity,
+        "Separator porosity": Separator_porosity,
+
+        # 传输特性参数
+        "Positive electrode diffusivity [m2.s-1]": Positive_electrode_diffusivity,
+        "Negative electrode diffusivity [m2.s-1]": Negative_electrode_diffusivity,
+        "Positive particle radius [m]": Positive_particle_radius,
+        "Negative particle radius [m]": Negative_particle_radius,
+        "Negative electrode conductivity [S.m-1]": Negative_electrode_conductivity,
+        "Positive electrode conductivity [S.m-1]": Positive_electrode_conductivity,
         "Negative electrode Bruggeman coefficient (electrolyte)": Negative_electrode_Bruggeman_coefficient,
         "Positive electrode Bruggeman coefficient (electrolyte)": Positive_electrode_Bruggeman_coefficient,
-        "Separator porosity": Separator_porosity,
-        "Negative current collector thickness [m]": Negative_current_collector_thickness,
-        "Positive current collector thickness [m]": Positive_current_collector_thickness,
-        "Positive electrode thickness [m]": Positive_electrode_thickness,
-        "Positive electrode active material volume fraction": Positive_electrode_active_material_volume_fraction,
-        "Negative electrode specific heat capacity [J.kg-1.K-1]": Negative_electrode_specific_heat_capacity,
-        "Positive electrode thermal conductivity [W.m-1.K-1]": Positive_electrode_thermal_conductivity,
-        "Negative electrode active material volume fraction": Negative_electrode_active_material_volume_fraction,
-        # "Negative electrode density [kg.m-3]": Negative_electrode_density,
-        # "Positive electrode specific heat capacity [J.kg-1.K-1]": Positive_electrode_specific_heat_capacity,
-        # "Positive electrode density [kg.m-3]": Positive_electrode_density,
-        # "Negative electrode thermal conductivity [W.m-1.K-1]": Negative_electrode_thermal_conductivity,
-        # "Cation transference number": Cation_transference_number,
-        # "Positive current collector thermal conductivity [W.m-1.K-1]": Positive_current_collector_thermal_conductivity,
-        # "Negative current collector thermal conductivity [W.m-1.K-1]": Negative_current_collector_thermal_conductivity,
-        # "Separator Bruggeman coefficient (electrolyte)": Separator_Bruggeman_coefficient,
-        # "Maximum concentration in negative electrode [mol.m-3]": Maximum_concentration_in_negative_electrode,
-        # "Positive current collector density [kg.m-3]": Positive_current_collector_density,
-        # "Negative current collector density [kg.m-3]": Negative_current_collector_density,
-        # "Positive current collector conductivity [S.m-1]": Positive_current_collector_conductivity,
-        # "Negative current collector conductivity [S.m-1]": Negative_current_collector_conductivity,
-        # "Negative electrode porosity": Negative_electrode_porosity,
+
+        # 浓度参数
+        "Initial concentration in positive electrode [mol.m-3]": Initial_concentration_in_positive_electrode,
+        "Initial concentration in negative electrode [mol.m-3]": Initial_concentration_in_negative_electrode,
+        "Maximum concentration in positive electrode [mol.m-3]": Maximum_concentration_in_positive_electrode,
+        "Maximum concentration in negative electrode [mol.m-3]": Maximum_concentration_in_negative_electrode,
 
     }
+
     # Update the parameter value
     parameter_values.update(param_dict, check_already_exists=False)
     # Define the parameter to vary
@@ -288,7 +250,7 @@ def catch_error_simulation(solution, soc_range, return_dict):
 
 
 # 定义包装函数以处理超时和错误
-def run_with_timeout(param, soc_range, timeout=60):
+def run_with_timeout(param, soc_range, timeout=15):
     param = param.cpu().numpy()
     print('param', param)
     manager = multiprocessing.Manager()
@@ -322,7 +284,6 @@ def obj_func(solution, soc_range):
     all_time_rmse, reason = run_with_timeout(solution, soc_range)
     obj = max(all_time_rmse)
     print("\033[31m Norm Solution Value\033[0m", solution)
-    # fitness = -np.log(time_rmse_value)
     print("\033[31m RMSE (V):\033[0m", [mv for mv in all_time_rmse])
     print("\033[31m Value (V):\033[0m", obj)
     print("\033[31m Error Reason:\033[0m", reason)
@@ -338,14 +299,14 @@ def eval_objective(x):
 
 def eval_c1(x):
     """低SOC段的约束条件: RMSE < 20mV"""
-    soc_range = (0.15, 0.3)
-    return obj_func(x, soc_range) - 10  # 转换为约束形式 c1(x) <= 0
+    soc_range = (0.1, 0.3)
+    return obj_func(x, soc_range) - 0.02  # 转换为约束形式 c1(x) <= 0
 
 
 def eval_c2(x):
     """高SOC段的约束条件: RMSE < 20mV"""
-    soc_range = (0.7, 0.85)
-    return obj_func(x, soc_range) - 10  # 转换为约束形式 c2(x) <= 0
+    soc_range = (0.7, 0.9)
+    return obj_func(x, soc_range) - 0.02  # 转换为约束形式 c2(x) <= 0
 
 
 @dataclass
@@ -425,6 +386,11 @@ def update_state(state, Y_next, C_next):
 def get_initial_points(dim, n_pts, seed=0):
     sobol = SobolEngine(dimension=dim, scramble=True, seed=seed)
     X_init = sobol.draw(n=n_pts).to(dtype=dtype, device=device)
+    base_name = name.split(",")[0].split("-")[0]
+    bayes_csv = f"./solutions/Bayes/{base_name}MO-Constraint-{model_type}-32.csv"
+    # for i in range(n_pts):
+    #     print(f"Loading Bayesian optimization results {i + 1} from: {bayes_csv}")
+    #     X_init[i] = torch.tensor(read_csv_solution(bayes_csv, i), **tkwargs)
     return X_init
 
 
@@ -487,152 +453,218 @@ def get_fitted_model(X, Y):
     return model
 
 
-def optimize_battery_params():
-    # 生成初始数据
-    train_X = get_initial_points(dim, n_init)
-    train_X[0] = torch.tensor([0.7101, 0.0251, 0.3674, 0.5449, 0.3347, 0.6985, 0.6294, 0.9367, 0.1892,
-                               0.0064, 0.9788, 0.2365, 0.2427, 0.4167, 0.6508, 0.5221, 0.6422, 0.0942,
-                               0.7961, 0.1788, 0.8444, 0.8283, 0.8611, 0.3239, 0.3895, 0.1498], **tkwargs)
-    train_X[1] = torch.tensor([0.7101, 0.0251, 0.3674, 0.5449, 0.3347, 0.6985, 0.6294, 0.9367, 0.1892,
-                               0.0064, 0.9788, 0.2365, 0.2427, 0.4167, 0.6508, 0.5221, 0.6422, 0.0942,
-                               0.7961, 0.1788, 0.8444, 0.8283, 0.8611, 0.3239, 0.3895, 0.1498], **tkwargs)
-    train_X[2] = torch.tensor([0.7101, 0.4040, 0.2826, 0.6823, 0.3347, 0.9860, 0.6294, 0.8809, 0.1892,
-                               0.1919, 0.9926, 0.0887, 0.3709, 0.6593, 0.9653, 0.9061, 0.6422, 0.0942,
-                               0.4287, 0.1996, 0.4793, 0.9985, 0.8566, 0.3239, 0.4990, 0.5125], **tkwargs)
-    train_X[3] = torch.tensor([0.4856, 0.4078, 0.4870, 0.5449, 0.5106, 0.9009, 0.6294, 0.8849, 0.2211,
-                               0.3623, 0.5916, 0.0036, 0.4376, 0.1247, 0.6508, 0.6425, 0.5998, 0.0942,
-                               0.9098, 0.1788, 0.4747, 0.7243, 0.7884, 0.5112, 0.7485, 0.0361], **tkwargs)
-    train_X[4] = torch.tensor([0.8745, 0.1569, 0.3674, 0.7501, 0.4985, 0.3524, 0.7135, 0.9367, 0.4223,
-                               0.3472, 0.7172, 0.2365, 0.5736, 0.6633, 0.6508, 0.5325, 0.8235, 0.0942,
-                               0.6828, 0.0468, 0.5920, 0.8350, 0.6345, 0.5584, 0.6960, 0.4666], **tkwargs)
-    train_X[5] = torch.tensor([0.7101, 0.3821, 0.0256, 0.4781, 0.6368, 0.3815, 0.6874, 0.9746, 0.1692,
-                               0.0296, 0.4520, 0.0559, 0.2649, 0.0425, 0.8758, 0.8822, 0.6053, 0.1626,
-                               0.9345, 0.5538, 0.6375, 0.9267, 0.7642, 0.0408, 0.5223, 0.4361], **tkwargs)
-    train_X[6] = torch.tensor([0.3294, 0.2582, 0.0723, 0.5449, 0.3347, 0.7764, 0.9938, 0.6546, 0.4615,
-                               0.0654, 0.6771, 0.1256, 0.5634, 0.3837, 0.6662, 0.8822, 0.3447, 0.1264,
-                               0.5513, 0.2175, 0.5170, 0.7012, 0.9247, 0.3239, 0.3118, 0.5369], **tkwargs)
-    train_X[7] = torch.tensor([0.8154, 0.0251, 0.4928, 0.7569, 0.7318, 0.5597, 0.6874, 0.5573, 0.5818,
-                               0.0455, 0.3074, 0.0559, 0.1432, 0.2177, 0.4287, 0.8822, 0.5748, 0.1264,
-                               0.6537, 0.1056, 0.5245, 0.4313, 0.7642, 0.6718, 0.2782, 0.5190], **tkwargs)
-    train_X[8] = torch.tensor([0.5143, 0.1298, 0.2015, 0.6121, 0.3347, 0.1460, 0.8304, 0.5388, 0.2016,
-                               0.0436, 0.2684, 0.0559, 0.0351, 0.0127, 0.6427, 0.8822, 0.5689, 0.4642,
-                               0.6537, 0.2175, 0.6161, 0.5464, 0.7385, 0.6300, 0.2069, 0.3007], **tkwargs)
-    train_X[9] = torch.tensor([0.9343, 0.0609, 0.3650, 0.3445, 0.3347, 0.1705, 0.6874, 0.7904, 0.1954,
-                               0.3452, 0.3783, 0.0598, 0.4803, 0.0425, 0.3429, 0.8818, 0.9243, 0.0039,
-                               0.2687, 0.2175, 0.8849, 0.5464, 0.8105, 0.6020, 0.6098, 0.4539], **tkwargs)
+# 定义保存数据的函数，使用 JSON 格式
+def save_data(train_X, train_Y, C1, C2, filename='data.json'):
+    # 确保 tensor 在 CPU 上并转换为 NumPy 数组
+    train_X_np = train_X.cpu().numpy()
+    train_Y_np = train_Y.cpu().numpy().flatten()  # 展平成一维
+    C1_np = C1.cpu().numpy().flatten()
+    C2_np = C2.cpu().numpy().flatten()
 
-    # train_Y = torch.tensor([eval_objective(x) for x in train_X], **tkwargs).unsqueeze(-1)
-    # C1 = torch.tensor([eval_c1(x) for x in train_X], **tkwargs).unsqueeze(-1)
-    # C2 = torch.tensor([eval_c2(x) for x in train_X], **tkwargs).unsqueeze(-1)
-    # 使用多线程计算 eval_objective, eval_c1, eval_c2 的结果
-    train_Y_list = Parallel(n_jobs=2, prefer="threads")(delayed(eval_objective)(x) for x in train_X)
-    C1_list = Parallel(n_jobs=2, prefer="threads")(delayed(eval_c1)(x) for x in train_X)
-    C2_list = Parallel(n_jobs=2, prefer="threads")(delayed(eval_c2)(x) for x in train_X)
-    useful_point = 0
-    for i in range(len(train_Y_list)):
-        if train_Y_list[i] != 1.5:
-            useful_point = useful_point + 1
+    # 创建字典列表
+    data_list = []
+    for i in range(train_X_np.shape[0]):
+        data_list.append({
+            "train_X": train_X_np[i].tolist(),  # 转换为列表
+            "train_Y": float(train_Y_np[i]),  # 确保为浮点数
+            "C1": float(C1_np[i]),
+            "C2": float(C2_np[i])
+        })
+
+    # 按 train_Y 排序
+    data_list.sort(key=lambda x: x["train_Y"])
+
+    # 保存到 JSON 文件
+    with open(filename, 'w') as f:
+        json.dump(data_list, f, indent=4)
+
+
+def read_csv_solution(csv_file, i):
+    try:
+        # Read the CSV file
+        df = pd.read_csv(csv_file)
+
+        # Get the first row solution (best solution)
+        solution_str = df.iloc[i]['Solution']
+        cleaned_str = solution_str.strip('[]')  # 去除可能的方括号和两端空白
+        numbers = cleaned_str.split()  # 按空格分割成列表
+        solution = np.array(list(map(float, numbers)))  # 转为浮点数后创建数组
+
+        print(solution)
+        print(f"Successfully loaded solution from {csv_file}")
+        print(f"Solution shape: {solution.shape}")
+        print(f"Solution: {solution}")
+
+        return solution
+    except Exception as e:
+        print(f"Error reading CSV solution: {e}")
+        raise
+
+
+def optimize_battery_params():
+    train_X = get_initial_points(dim, n_init)
+
+    # 并行计算初始点的目标值和约束
+    njobs = 24
+    train_Y_list = Parallel(n_jobs=njobs, prefer="threads")(delayed(eval_objective)(x) for x in train_X)
+    C1_list = Parallel(n_jobs=njobs, prefer="threads")(delayed(eval_c1)(x) for x in train_X)
+    C2_list = Parallel(n_jobs=njobs, prefer="threads")(delayed(eval_c2)(x) for x in train_X)
+
+    # 统计有效点数量
+    useful_point = sum(1 for y in train_Y_list if y != 1.5)
     print("################################################")
     print("num of useful point:", useful_point)
     print("################################################")
-    # 将计算结果转换为 tensor，并增加一个维度
+
+    # 转换为 tensor
     train_Y = torch.tensor(train_Y_list, **tkwargs).unsqueeze(-1)
     C1 = torch.tensor(C1_list, **tkwargs).unsqueeze(-1)
     C2 = torch.tensor(C2_list, **tkwargs).unsqueeze(-1)
 
-    # 初始化SCBO状态
+    # 初始化 SCBO 状态
     state = ScboState(dim, batch_size=batch_size)
-    N_CANDIDATES = 100
+    N_CANDIDATES = 50
     sobol = SobolEngine(dim, scramble=True, seed=1)
+    stop_length = 300
 
-    while not state.restart_triggered:
-        # 拟合GP模型
-        model = get_fitted_model(train_X, train_Y)
-        c1_model = get_fitted_model(train_X, C1)
-        c2_model = get_fitted_model(train_X, C2)
+    # 保存可行解及其 RMSE 和约束值列表
+    feasible_solutions = []
+    feasible_rmse = []
+    feasible_c1 = []  # 添加存储C1约束值的列表
+    feasible_c2 = []  # 添加存储C2约束值的列表
 
-        # 生成新的候选点
-        with gpytorch.settings.max_cholesky_size(float("inf")):
-            X_next = generate_batch(
-                state=state,
-                model=model,
-                X=train_X,
-                Y=train_Y,
-                C=torch.cat((C1, C2), dim=-1),
-                batch_size=batch_size,
-                n_candidates=N_CANDIDATES,
-                constraint_model=ModelListGP(c1_model, c2_model),
-                sobol=sobol,
-            )
+    # --- 步骤 2: 在 while 循环中添加错误处理并保存到 JSON ---
+    while True:
+        try:
+            # 拟合 GP 模型
+            model = get_fitted_model(train_X, train_Y)
+            c1_model = get_fitted_model(train_X, C1)
+            c2_model = get_fitted_model(train_X, C2)
 
-        # 评估新的候选点
-        # Y_next = torch.tensor([eval_objective(x) for x in X_next], **tkwargs).unsqueeze(-1)
-        # C1_next = torch.tensor([eval_c1(x) for x in X_next], **tkwargs).unsqueeze(-1)
-        # C2_next = torch.tensor([eval_c2(x) for x in X_next], **tkwargs).unsqueeze(-1)
-        # 使用 joblib 并行化计算
-        Y_next_list = Parallel(n_jobs=2, prefer="threads")(delayed(eval_objective)(x) for x in X_next)
-        C1_next_list = Parallel(n_jobs=2, prefer="threads")(delayed(eval_c1)(x) for x in X_next)
-        C2_next_list = Parallel(n_jobs=2, prefer="threads")(delayed(eval_c2)(x) for x in X_next)
-        # 将计算结果转换为 tensor，并增加一个维度
-        Y_next = torch.tensor(Y_next_list, **tkwargs).unsqueeze(-1)
-        C1_next = torch.tensor(C1_next_list, **tkwargs).unsqueeze(-1)
-        C2_next = torch.tensor(C2_next_list, **tkwargs).unsqueeze(-1)
+            # 生成新的候选点
+            with gpytorch.settings.max_cholesky_size(float("inf")):
+                X_next = generate_batch(
+                    state=state,
+                    model=model,
+                    X=train_X,
+                    Y=train_Y,
+                    C=torch.cat((C1, C2), dim=-1),
+                    batch_size=batch_size,
+                    n_candidates=N_CANDIDATES,
+                    constraint_model=ModelListGP(c1_model, c2_model),
+                    sobol=sobol,
+                )
 
-        for i in range(len(train_Y_list)):
-            if train_Y_list[i] != 1.5:
-                useful_point = useful_point + 1
-        print("################################################")
-        print("num of useful point:", useful_point)
-        print("################################################")
+            # 并行评估新的候选点
+            Y_next_list = Parallel(n_jobs=njobs, prefer="threads")(delayed(eval_objective)(x) for x in X_next)
+            C1_next_list = Parallel(n_jobs=njobs, prefer="threads")(delayed(eval_c1)(x) for x in X_next)
+            C2_next_list = Parallel(n_jobs=njobs, prefer="threads")(delayed(eval_c2)(x) for x in X_next)
 
-        C_next = torch.cat([C1_next, C2_next], dim=-1)
+            # 转换为 tensor
+            Y_next = torch.tensor(Y_next_list, **tkwargs).unsqueeze(-1)
+            C1_next = torch.tensor(C1_next_list, **tkwargs).unsqueeze(-1)
+            C2_next = torch.tensor(C2_next_list, **tkwargs).unsqueeze(-1)
 
-        # 更新状态
-        state = update_state(state=state, Y_next=Y_next, C_next=C_next)
+            for i in range(len(Y_next_list)):
+                if Y_next_list[i] != 1.5:
+                    feasible_solutions.append(X_next[i].cpu().numpy())
+                    feasible_rmse.append(Y_next_list[i])
+                    feasible_c1.append(C1_next_list[i])  # 保存C1约束值
+                    feasible_c2.append(C2_next_list[i])  # 保存C2约束值
+                    if len(feasible_solutions) > 100:
+                        worst_idx = np.argmax(feasible_rmse)
+                        del feasible_solutions[worst_idx]
+                        del feasible_rmse[worst_idx]
+                        del feasible_c1[worst_idx]  # 同时删除对应的C1约束值
+                        del feasible_c2[worst_idx]  # 同时删除对应的C2约束值
 
-        # 添加新数据
-        train_X = torch.cat((train_X, X_next), dim=0)
-        train_Y = torch.cat((train_Y, Y_next), dim=0)
-        C1 = torch.cat((C1, C1_next), dim=0)
-        C2 = torch.cat((C2, C2_next), dim=0)
+            # 更新有效点数量
+            useful_point += sum(1 for y in Y_next_list if y != 1.5)
+            print("################################################")
+            print("num of useful point:", useful_point)
+            print("################################################")
 
-        if (state.best_constraint_values <= 0).all():
-            print(f"{len(train_X)}) Best RMSE: {-state.best_value:.2e}, TR length: {state.length:.2e}")
-        else:
-            violation = state.best_constraint_values.clamp(min=0).sum()
-            print(
-                f"{len(train_X)}) No feasible point yet! Constraint violation: "
-                f"{violation:.2e}, TR length: {state.length:.2e}"
-            )
+            # 更新状态
+            C_next = torch.cat([C1_next, C2_next], dim=-1)
+            state = update_state(state=state, Y_next=Y_next, C_next=C_next)
 
-        # 停止条件：当 train_Y 的长度达到 5000 时停止
-        if len(train_Y) >= 5000:
-            print("Stopping condition reached: train_Y length >= 5000")
-            break
+            # 添加新数据
+            train_X = torch.cat((train_X, X_next), dim=0)
+            train_Y = torch.cat((train_Y, Y_next), dim=0)
+            C1 = torch.cat((C1, C1_next), dim=0)
+            C2 = torch.cat((C2, C2_next), dim=0)
 
-    # 返回最优结果
+            # 打印当前状态
+            if (state.best_constraint_values <= 0).all():
+                print(f"{len(train_X)}) Best RMSE: {-state.best_value:.2e}, TR length: {state.length:.2e}")
+            else:
+                violation = state.best_constraint_values.clamp(min=0).sum()
+                print(
+                    f"{len(train_X)}) No feasible point yet! Constraint violation: "
+                    f"{violation:.2e}, TR length: {state.length:.2e}"
+                )
+
+            # 检查停止条件
+            print("\033[31m################################################\033[0m")
+            print("\033[31mLength of train Y:\033[0m", len(train_Y))
+            print("\033[31m################################################\033[0m")
+            if len(train_Y) >= stop_length:
+                print(f"Stopping condition reached: train_Y length >= {stop_length}")
+                break
+
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            # 保存当前数据到 JSON
+            save_data(train_X, train_Y, C1, C2, filename='./solutions/final_data.json')
+            # 返回最优结果
+            best_ind = get_best_index_for_batch(Y=train_Y, C=torch.cat((C1, C2), dim=-1))
+            best_params = train_X[best_ind]
+            best_rmse = train_Y[best_ind].item()
+            print('\033[31m best params:\033[0m ', best_params)
+            print('\033[31m best rmse:\033[0m ', best_rmse)
+
+            # 按 RMSE 排序（使用zip将四个列表打包在一起）
+            sorted_data = sorted(zip(feasible_solutions, feasible_rmse, feasible_c1, feasible_c2), key=lambda x: x[1])
+
+            # 写入 CSV 文件，增加C1和C2列
+            with open(rf'./solutions/Bayes/{file_name}.csv', 'w', newline='') as csvfile:
+                writer = csv.writer(csvfile)
+                writer.writerow(['Solution', 'RMSE', 'C1', 'C2'])  # 增加C1和C2列标题
+                for solution, rmse, c1, c2 in sorted_data:  # 解包四个值
+                    writer.writerow([solution, rmse, c1, c2])  # 写入所有四个值
+
+            return best_params, best_rmse
+
+    # 正常结束时保存数据到 JSON 并返回最优结果
+    save_data(train_X, train_Y, C1, C2, filename='./solutions/final_data.json')
     best_ind = get_best_index_for_batch(Y=train_Y, C=torch.cat((C1, C2), dim=-1))
     best_params = train_X[best_ind]
-    best_rmse = main_simulationMO(best_params, 'all', save=True, plot=False)
+    best_rmse = main_simulationMO(best_params.cpu().numpy(), 'all', save=True, plot=False)
+    print("minimum value of RMSE:", min(train_Y))
     print('\033[31m best params:\033[0m ', best_params)
     print('\033[31m best rmse:\033[0m ', best_rmse)
 
+    # 绘图
     fig, ax = plt.subplots(figsize=(8, 6))
     score = train_Y.clone()
-    # Set infeasible to -inf
-    score[~(torch.cat((C1, C2), dim=-1) <= 0).all(dim=-1)] = float("-inf")
-    fx = np.minimum.accumulate(score.cpu())
+    fx = np.minimum.accumulate(score.cpu().numpy())
     plt.plot(fx, marker="", lw=3)
-
     plt.plot([0, len(train_Y)], [0.01, 0.01], "k--", lw=3)
     plt.ylabel("Function value", fontsize=18)
     plt.xlabel("Number of evaluations", fontsize=18)
-    plt.title("10D Ackley with 2 outcome constraints", fontsize=20)
     plt.xlim([0, len(train_Y)])
-    plt.ylim([-15, 1])
-
     plt.grid(True)
     fig.savefig('./all_plot/Bayes_Cons.png', dpi=600)
+
+    # 按 RMSE 排序（现在包含约束值）
+    sorted_data = sorted(zip(feasible_solutions, feasible_rmse, feasible_c1, feasible_c2), key=lambda x: x[1])
+
+    # 写入 CSV 文件，增加C1和C2列
+    with open(rf'./solutions/Bayes/{file_name}.csv', 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(['Solution', 'RMSE', 'C1', 'C2'])  # 增加C1和C2列标题
+        for solution, rmse, c1, c2 in sorted_data:  # 解包四个值
+            writer.writerow([solution, rmse, c1, c2])  # 写入所有四个值
 
     return best_params, train_Y[best_ind].item()
 
@@ -641,13 +673,13 @@ if __name__ == '__main__':
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     dtype = torch.double
     tkwargs = {"device": device, "dtype": dtype}
-    dim = 26
+    dim = 22
     lb = torch.zeros(dim, **tkwargs)
     ub = torch.ones(dim, **tkwargs)
     bounds = torch.stack([lb, ub])
 
-    batch_size = 64
-    n_init = 10
+    batch_size = 10
+    n_init = 30
     print("devce:", device)
     dtype = torch.double
 
@@ -655,7 +687,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Run Bayes optimization or load solution.")
     # 设置默认参数值
     default_train = True
-    default_filename = "81#-T25-0.1C,81#-T25-0.2C,81#-T25-0.33C,81#-T25-1C"  # 替换为实际要设置的默认文件名
+    default_filename = "81#-T25-0.1C,81#-T25-0.2C,81#-T25-0.33C,81#-T25-1C"
     default_method = "Bayes"
     default_model = "DFN"
     parser.add_argument('--train', action='store_true', default=default_train, help='Train the model.')
@@ -665,7 +697,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     name = args.filename
     model_type = args.model
-    file_name = name.split(",")[0].split("-")[0] + "MO-Constraint" + f"-{model_type}"
+    file_name = name.split(",")[0].split("-")[0] + "MO-Constraint" + f"-{model_type}-{dim}"
     subdir_name = args.method
     wc_num = len(args.filename.split(","))
     if args.train:

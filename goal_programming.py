@@ -427,36 +427,6 @@ def get_initial_points(dim, n_pts, seed=0):
     for i in range(n_pts):
         print(f"Loading Bayesian optimization results {i+1} from: {bayes_csv}")
         X_init[i] = torch.tensor(read_csv_solution(bayes_csv, i), **tkwargs)
-    # X_init[0] = torch.tensor([0.7101, 0.0251, 0.3674, 0.5449, 0.3347, 0.6985, 0.6294, 0.9367, 0.1892,
-    #                           0.0064, 0.9788, 0.2365, 0.2427, 0.4167, 0.6508, 0.5221, 0.6422, 0.0942,
-    #                           0.7961, 0.1788, 0.8444, 0.8283, 0.8611, 0.3239, 0.3895, 0.1498], **tkwargs)
-    # X_init[1] = torch.tensor([0.7101, 0.0251, 0.3674, 0.5449, 0.3347, 0.6985, 0.6294, 0.9367, 0.1892,
-    #                           0.0064, 0.9788, 0.2365, 0.2427, 0.4167, 0.6508, 0.5221, 0.6422, 0.0942,
-    #                           0.7961, 0.1788, 0.8444, 0.8283, 0.8611, 0.3239, 0.3895, 0.1498], **tkwargs)
-    # X_init[2] = torch.tensor([0.7101, 0.4040, 0.2826, 0.6823, 0.3347, 0.9860, 0.6294, 0.8809, 0.1892,
-    #                           0.1919, 0.9926, 0.0887, 0.3709, 0.6593, 0.9653, 0.9061, 0.6422, 0.0942,
-    #                           0.4287, 0.1996, 0.4793, 0.9985, 0.8566, 0.3239, 0.4990, 0.5125], **tkwargs)
-    # X_init[3] = torch.tensor([0.4856, 0.4078, 0.4870, 0.5449, 0.5106, 0.9009, 0.6294, 0.8849, 0.2211,
-    #                           0.3623, 0.5916, 0.0036, 0.4376, 0.1247, 0.6508, 0.6425, 0.5998, 0.0942,
-    #                           0.9098, 0.1788, 0.4747, 0.7243, 0.7884, 0.5112, 0.7485, 0.0361], **tkwargs)
-    # X_init[4] = torch.tensor([0.8745, 0.1569, 0.3674, 0.7501, 0.4985, 0.3524, 0.7135, 0.9367, 0.4223,
-    #                           0.3472, 0.7172, 0.2365, 0.5736, 0.6633, 0.6508, 0.5325, 0.8235, 0.0942,
-    #                           0.6828, 0.0468, 0.5920, 0.8350, 0.6345, 0.5584, 0.6960, 0.4666], **tkwargs)
-    # X_init[5] = torch.tensor([0.7101, 0.3821, 0.0256, 0.4781, 0.6368, 0.3815, 0.6874, 0.9746, 0.1692,
-    #                           0.0296, 0.4520, 0.0559, 0.2649, 0.0425, 0.8758, 0.8822, 0.6053, 0.1626,
-    #                           0.9345, 0.5538, 0.6375, 0.9267, 0.7642, 0.0408, 0.5223, 0.4361], **tkwargs)
-    # X_init[6] = torch.tensor([0.3294, 0.2582, 0.0723, 0.5449, 0.3347, 0.7764, 0.9938, 0.6546, 0.4615,
-    #                           0.0654, 0.6771, 0.1256, 0.5634, 0.3837, 0.6662, 0.8822, 0.3447, 0.1264,
-    #                           0.5513, 0.2175, 0.5170, 0.7012, 0.9247, 0.3239, 0.3118, 0.5369], **tkwargs)
-    # X_init[7] = torch.tensor([0.8154, 0.0251, 0.4928, 0.7569, 0.7318, 0.5597, 0.6874, 0.5573, 0.5818,
-    #                           0.0455, 0.3074, 0.0559, 0.1432, 0.2177, 0.4287, 0.8822, 0.5748, 0.1264,
-    #                           0.6537, 0.1056, 0.5245, 0.4313, 0.7642, 0.6718, 0.2782, 0.5190], **tkwargs)
-    # X_init[8] = torch.tensor([0.5143, 0.1298, 0.2015, 0.6121, 0.3347, 0.1460, 0.8304, 0.5388, 0.2016,
-    #                           0.0436, 0.2684, 0.0559, 0.0351, 0.0127, 0.6427, 0.8822, 0.5689, 0.4642,
-    #                           0.6537, 0.2175, 0.6161, 0.5464, 0.7385, 0.6300, 0.2069, 0.3007], **tkwargs)
-    # X_init[9] = torch.tensor([0.9343, 0.0609, 0.3650, 0.3445, 0.3347, 0.1705, 0.6874, 0.7904, 0.1954,
-    #                           0.3452, 0.3783, 0.0598, 0.4803, 0.0425, 0.3429, 0.8818, 0.9243, 0.0039,
-    #                           0.2687, 0.2175, 0.8849, 0.5464, 0.8105, 0.6020, 0.6098, 0.4539], **tkwargs)
     return X_init
 
 
@@ -591,11 +561,13 @@ def optimize_battery_params():
     state = ScboState(dim, batch_size=batch_size)
     N_CANDIDATES = 50
     sobol = SobolEngine(dim, scramble=True, seed=1)
-    stop_length = 500
+    stop_length = 100
 
-    # 保存可行解及其 RMSE 列表
+    # 保存可行解及其 RMSE 和约束值列表
     feasible_solutions = []
     feasible_rmse = []
+    feasible_c1 = []  # 添加存储C1约束值的列表
+    feasible_c2 = []  # 添加存储C2约束值的列表
 
     # --- 步骤 2: 在 while 循环中添加错误处理并保存到 JSON ---
     while True:
@@ -633,10 +605,14 @@ def optimize_battery_params():
                 if Y_next_list[i] != 1.5:
                     feasible_solutions.append(X_next[i].cpu().numpy())
                     feasible_rmse.append(Y_next_list[i])
+                    feasible_c1.append(C1_next_list[i])  # 保存C1约束值
+                    feasible_c2.append(C2_next_list[i])  # 保存C2约束值
                     if len(feasible_solutions) > 100:
                         worst_idx = np.argmax(feasible_rmse)
                         del feasible_solutions[worst_idx]
                         del feasible_rmse[worst_idx]
+                        del feasible_c1[worst_idx]  # 同时删除对应的C1约束值
+                        del feasible_c2[worst_idx]  # 同时删除对应的C2约束值
 
             # 更新有效点数量
             useful_point += sum(1 for y in Y_next_list if y != 1.5)
@@ -683,15 +659,15 @@ def optimize_battery_params():
             print('\033[31m best params:\033[0m ', best_params)
             print('\033[31m best rmse:\033[0m ', best_rmse)
 
-            # 按 RMSE 排序
-            sorted_data = sorted(zip(feasible_solutions, feasible_rmse), key=lambda x: x[1])
+            # 按 RMSE 排序（使用zip将四个列表打包在一起）
+            sorted_data = sorted(zip(feasible_solutions, feasible_rmse, feasible_c1, feasible_c2), key=lambda x: x[1])
 
-            # 写入 CSV 文件
+            # 写入 CSV 文件，增加C1和C2列
             with open(rf'./solutions/Bayes/{file_name}.csv', 'w', newline='') as csvfile:
                 writer = csv.writer(csvfile)
-                writer.writerow(['Solution', 'RMSE'])
-                for solution, rmse in sorted_data:
-                    writer.writerow([solution, rmse])
+                writer.writerow(['Solution', 'RMSE', 'C1', 'C2'])  # 增加C1和C2列标题
+                for solution, rmse, c1, c2 in sorted_data:  # 解包四个值
+                    writer.writerow([solution, rmse, c1, c2])  # 写入所有四个值
 
             return best_params, best_rmse
 
@@ -716,18 +692,17 @@ def optimize_battery_params():
     plt.grid(True)
     fig.savefig('./all_plot/Bayes_Cons.png', dpi=600)
 
-    # 按 RMSE 排序
-    sorted_data = sorted(zip(feasible_solutions, feasible_rmse), key=lambda x: x[1])
+    # 按 RMSE 排序（现在包含约束值）
+    sorted_data = sorted(zip(feasible_solutions, feasible_rmse, feasible_c1, feasible_c2), key=lambda x: x[1])
 
-    # 写入 CSV 文件
+    # 写入 CSV 文件，增加C1和C2列
     with open(rf'./solutions/Bayes/{file_name}.csv', 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
-        writer.writerow(['Solution', 'RMSE'])
-        for solution, rmse in sorted_data:
-            writer.writerow([solution, rmse])
+        writer.writerow(['Solution', 'RMSE', 'C1', 'C2'])  # 增加C1和C2列标题
+        for solution, rmse, c1, c2 in sorted_data:  # 解包四个值
+            writer.writerow([solution, rmse, c1, c2])  # 写入所有四个值
 
     return best_params, train_Y[best_ind].item()
-
 
 if __name__ == '__main__':
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

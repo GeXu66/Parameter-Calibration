@@ -1,386 +1,377 @@
+# sensitivity_analysis_mp.py
 import pybamm
 import numpy as np
-import os
-from datetime import datetime
-import pandas as pd
-import SALib.sample.sobol as saltelli
-from SALib.analyze import sobol
-from SALib.analyze import pawn
 import matplotlib.pyplot as plt
+import pandas as pd
+import os
+import argparse
+import time
+import multiprocessing as mp
+from functools import partial
+from SALib.sample import saltelli
+from SALib.analyze import sobol
+from tqdm import tqdm
+import simulate_discharge as sim  # Import your existing simulation module
 
 
-def min_max_func(min_val, max_val, x):
-    """将0-1之间的归一化值转换回原始范围"""
-    return min_val + x * (max_val - min_val)
+def define_problem():
+    """Define the problem for SALib with parameter ranges from the provided table."""
+    return {
+        'num_vars': 22,  # Total number of parameters (excluding 2 fixed ones)
+        'names': [
+            # Geometric Parameters
+            'N_parallel',
+            'electrode_height',
+            'electrode_width',
+            'Negative_electrode_thickness',
+            'Positive_electrode_thickness',
+
+            # Structural Parameters
+            'Negative_particle_radius',
+            'Positive_particle_radius',
+            'Negative_electrode_active_material_volume_fraction',
+            'Positive_electrode_active_material_volume_fraction',
+            'Negative_electrode_porosity',
+            'Positive_electrode_porosity',
+            'Separator_porosity',
+            'Maximum_concentration_in_negative_electrode',
+            'Maximum_concentration_in_positive_electrode',
+
+            # Transport Parameters
+            'Negative_electrode_diffusivity',
+            'Positive_electrode_diffusivity',
+            'Negative_electrode_Bruggeman_coefficient',
+            'Positive_electrode_Bruggeman_coefficient',
+            'Negative_electrode_conductivity',
+            'Positive_electrode_conductivity',
+
+            # Initial State Parameters
+            'Initial_concentration_in_negative_electrode',
+            'Initial_concentration_in_positive_electrode',
+        ],
+        'bounds': [
+            # Geometric Parameters
+            [150, 250],  # N_parallel
+            [0.17, 0.22],  # electrode_height [m]
+            [0.15, 0.19],  # electrode_width [m]
+            [8e-5, 1.2e-4],  # Negative_electrode_thickness [m]
+            [9e-5, 1.3e-4],  # Positive_electrode_thickness [m]
+
+            # Structural Parameters
+            [2e-6, 5e-6],  # Negative_particle_radius [m]
+            [1e-6, 4e-6],  # Positive_particle_radius [m]
+            [0.48, 0.62],  # Negative_electrode_active_material_volume_fraction
+            [0.45, 0.6],  # Positive_electrode_active_material_volume_fraction
+            [0.32, 0.45],  # Negative_electrode_porosity
+            [0.32, 0.45],  # Positive_electrode_porosity
+            [0.4, 0.6],  # Separator_porosity
+            [25000, 35000],  # Maximum_concentration_in_negative_electrode [mol/m³]
+            [45000, 58000],  # Maximum_concentration_in_positive_electrode [mol/m³]
+
+            # Transport Parameters
+            [1e-13, 1e-12],  # Negative_electrode_diffusivity [m²/s]
+            [1e-13, 1e-12],  # Positive_electrode_diffusivity [m²/s]
+            [1.2, 2.0],  # Negative_electrode_Bruggeman_coefficient
+            [1.2, 2.0],  # Positive_electrode_Bruggeman_coefficient
+            [50, 150],  # Negative_electrode_conductivity [S/m]
+            [30, 80],  # Positive_electrode_conductivity [S/m]
 
 
-def pybamm_sim(param, min_voltage, max_voltage, discharge_cur, time_max, capacity, temperature):
-    electrode_height = min_max_func(0.6, 1, param[0])
-    electrode_width = min_max_func(25, 30, param[1])
-    Negative_electrode_conductivity = min_max_func(14, 215, param[2])
-    Positive_electrode_diffusivity = min_max_func(5.9e-18, 1e-14, param[3])
-    Positive_particle_radius = min_max_func(1e-8, 1e-5, param[4])
-    Initial_concentration_in_positive_electrode = min_max_func(35.3766672, 31513, param[5])
-    Initial_concentration_in_negative_electrode = min_max_func(48.8682, 29866, param[6])
-    Positive_electrode_conductivity = min_max_func(0.18, 100, param[7])
-    Negative_particle_radius = min_max_func(0.0000005083, 0.0000137, param[8])
-    Negative_electrode_thickness = min_max_func(0.000036, 0.0007, param[9])
-    Total_heat_transfer_coefficient = min_max_func(5, 35, param[10])
-    Separator_density = min_max_func(397, 2470, param[11])
-    Separator_thermal_conductivity = min_max_func(0.10672, 0.34, param[12])
-    Positive_electrode_porosity = min_max_func(0.12728395, 0.4, param[13])
-    Separator_specific_heat_capacity = min_max_func(700, 1978, param[14])
-    Maximum_concentration_in_positive_electrode = min_max_func(22806, 63104, param[15])
-    Negative_electrode_Bruggeman_coefficient = min_max_func(1.5, 4, param[16])
-    Positive_electrode_Bruggeman_coefficient = min_max_func(1.5, 4, param[17])
-    Separator_porosity = min_max_func(0.39, 1, param[18])
-    Negative_current_collector_thickness = min_max_func(0.00001, 0.000025, param[19])
-    Positive_current_collector_thickness = min_max_func(0.00001, 0.000025, param[20])
-    Positive_electrode_thickness = min_max_func(0.000042, 0.0001, param[21])
-    Positive_electrode_active_material_volume_fraction = min_max_func(0.28485556, 0.665, param[22])
-    Negative_electrode_specific_heat_capacity = min_max_func(700, 1437, param[23])
-    Positive_electrode_thermal_conductivity = min_max_func(1.04, 2.1, param[24])
-    Negative_electrode_active_material_volume_fraction = min_max_func(0.372403, 0.75, param[25])
-    Negative_electrode_density = min_max_func(1555, 3100, param[26])
-    Positive_electrode_specific_heat_capacity = min_max_func(700, 1270, param[27])
-    Positive_electrode_density = min_max_func(2341, 4206, param[28])
-    Negative_electrode_thermal_conductivity = min_max_func(1.04, 1.7, param[29])
-    Cation_transference_number = min_max_func(0.25, 0.4, param[30])
-    Positive_current_collector_thermal_conductivity = min_max_func(158, 238, param[31])
-    Negative_current_collector_thermal_conductivity = min_max_func(267, 401, param[32])
-    Separator_Bruggeman_coefficient = min_max_func(1.5, 2, param[33])
-    Maximum_concentration_in_negative_electrode = min_max_func(24983, 33133, param[34])
-    Positive_current_collector_density = min_max_func(2700, 3490, param[35])
-    Negative_current_collector_density = min_max_func(8933, 11544, param[36])
-    Positive_current_collector_conductivity = min_max_func(35500000, 37800000, param[37])
-    Negative_current_collector_conductivity = min_max_func(58411000, 59600000, param[38])
-    Negative_electrode_porosity = min_max_func(0.25, 0.5, param[39])
-    min_voltage = min_max_func(min_voltage - 1.5, min_voltage + 0.5, param[40])
-    max_voltage = min_max_func(max_voltage - 0.5, max_voltage + 1.5, param[41])
-    exp = pybamm.Experiment(
-        [(
-            f"Discharge at {discharge_cur} C for {time_max} seconds",  # ageing cycles
-            # f"Discharge at 0.5 C until {min_voltage}V",  # ageing cycles
-            # f"Charge at 0.5 C for 1830 seconds",  # ageing cycles
-        )]
-    )
-    option = {"cell geometry": "arbitrary", "thermal": "lumped", "contact resistance": "false"}
-    model = pybamm.lithium_ion.SPM()  # Doyle-Fuller-Newman model
-    parameter_values = pybamm.ParameterValues("Prada2013")
-    param_dict = {
-        "Number of electrodes connected in parallel to make a cell": 1,
-        "Nominal cell capacity [A.h]": capacity,
-        "Lower voltage cut-off [V]": min_voltage,
-        "Upper voltage cut-off [V]": max_voltage,
-        "Ambient temperature [K]": 273.15 + 25,
-        "Initial temperature [K]": 273.15 + temperature,
-        # "Total heat transfer coefficient [W.m-2.K-1]": 10,
-        # "Cell cooling surface area [m2]": 0.126,
-        # "Cell volume [m3]": 0.00257839,
-        # cell
-        "Electrode height [m]": electrode_height,
-        "Electrode width [m]": electrode_width,
-        "Negative electrode conductivity [S.m-1]": Negative_electrode_conductivity,
-        "Positive electrode diffusivity [m2.s-1]": Positive_electrode_diffusivity,
-        "Positive particle radius [m]": Positive_particle_radius,
-        "Initial concentration in positive electrode [mol.m-3]": Initial_concentration_in_positive_electrode,
-        "Initial concentration in negative electrode [mol.m-3]": Initial_concentration_in_negative_electrode,
-        "Positive electrode conductivity [S.m-1]": Positive_electrode_conductivity,
-        "Negative particle radius [m]": Negative_particle_radius,
-        "Negative electrode thickness [m]": Negative_electrode_thickness,
-        "Total heat transfer coefficient [W.m-2.K-1]": Total_heat_transfer_coefficient,
-        "Separator density [kg.m-3]": Separator_density,
-        "Separator thermal conductivity [W.m-1.K-1]": Separator_thermal_conductivity,
-        "Positive electrode porosity": Positive_electrode_porosity,
-        "Separator specific heat capacity [J.kg-1.K-1]": Separator_specific_heat_capacity,
-        "Maximum concentration in positive electrode [mol.m-3]": Maximum_concentration_in_positive_electrode,
-        "Negative electrode Bruggeman coefficient (electrolyte)": Negative_electrode_Bruggeman_coefficient,
-        "Positive electrode Bruggeman coefficient (electrolyte)": Positive_electrode_Bruggeman_coefficient,
-        "Separator porosity": Separator_porosity,
-        "Negative current collector thickness [m]": Negative_current_collector_thickness,
-        "Positive current collector thickness [m]": Positive_current_collector_thickness,
-        "Positive electrode thickness [m]": Positive_electrode_thickness,
-        "Positive electrode active material volume fraction": Positive_electrode_active_material_volume_fraction,
-        "Negative electrode specific heat capacity [J.kg-1.K-1]": Negative_electrode_specific_heat_capacity,
-        "Positive electrode thermal conductivity [W.m-1.K-1]": Positive_electrode_thermal_conductivity,
-        "Negative electrode active material volume fraction": Negative_electrode_active_material_volume_fraction,
-        "Negative electrode density [kg.m-3]": Negative_electrode_density,
-        "Positive electrode specific heat capacity [J.kg-1.K-1]": Positive_electrode_specific_heat_capacity,
-        "Positive electrode density [kg.m-3]": Positive_electrode_density,
-        "Negative electrode thermal conductivity [W.m-1.K-1]": Negative_electrode_thermal_conductivity,
-        "Cation transference number": Cation_transference_number,
-        "Positive current collector thermal conductivity [W.m-1.K-1]": Positive_current_collector_thermal_conductivity,
-        "Negative current collector thermal conductivity [W.m-1.K-1]": Negative_current_collector_thermal_conductivity,
-        "Separator Bruggeman coefficient (electrolyte)": Separator_Bruggeman_coefficient,
-        "Maximum concentration in negative electrode [mol.m-3]": Maximum_concentration_in_negative_electrode,
-        "Positive current collector density [kg.m-3]": Positive_current_collector_density,
-        "Negative current collector density [kg.m-3]": Negative_current_collector_density,
-        "Positive current collector conductivity [S.m-1]": Positive_current_collector_conductivity,
-        "Negative current collector conductivity [S.m-1]": Negative_current_collector_conductivity,
-        "Negative electrode porosity": Negative_electrode_porosity,
-
+            # Initial State Parameters
+            [4000, 6000],  # Initial_concentration_in_negative_electrode [mol/m³]
+            [25000, 32000],  # Initial_concentration_in_positive_electrode [mol/m³]
+        ]
     }
-    # Update the parameter value
-    parameter_values.update(param_dict, check_already_exists=False)
-    # Create a simulation
-    sim = pybamm.Simulation(model, parameter_values=parameter_values, experiment=exp)
-    # Define the parameter to vary
-    safe_solver = pybamm.CasadiSolver(mode="safe", dt_max=120)
-    # Run the simulation
-    sim.solve(solver=safe_solver, calc_esoh=False, initial_soc=1)
-    sol = sim.solution
-    return parameter_values, sol
 
 
-def analyze_battery_performance(params):
-    """运行单次电池仿真并返回性能指标"""
+def update_parameters(base_params, sample_values, problem):
+    """Update the parameter dictionary with sample values for sensitivity analysis."""
+    params = base_params.copy()
+
+    # Map SALib sample values to parameter names
+    for i, name in enumerate(problem['names']):
+        # Handle special cases for parameter names that differ from PyBaMM names
+        if name == 'Electrolyte_conductivity':
+            params["Electrolyte conductivity [S.m-1]"] = sample_values[i]
+        elif name == 'Electrolyte_diffusivity':
+            params["Electrolyte diffusivity [m2.s-1]"] = sample_values[i]
+        else:
+            params[name] = sample_values[i]
+
+    return params
+
+
+def evaluate_model(params_sample, idx, problem, base_params, c_rate, battery_id, temperature, model_type, data_dir):
+    """Worker function to evaluate the model with a single parameter set."""
     try:
-        # 设置固定参数
-        min_voltage_base = 2.5  # 示例基准值，请根据实际情况调整
-        max_voltage_base = 3.3  # 示例基准值，请根据实际情况调整
-        discharge_cur = 1.0  # 放电倍率
-        time_max = 3600  # 仿真时间
-        capacity = 280  # 电池容量
-        temperature = 25  # 温度
+        # Update parameters with sample values
+        current_params = update_parameters(base_params, params_sample, problem)
 
-        # 运行仿真
-        parameter_values, solution = pybamm_sim(
-            params, min_voltage_base, max_voltage_base, discharge_cur, time_max, capacity, temperature
+        # Read experimental data
+        exp_file_name = os.path.join(data_dir, f"{battery_id}-T{temperature}-{c_rate}C.csv")
+        time_max, max_voltage, min_voltage, capacity, time_exp, voltage_exp = sim.read_file_safe(exp_file_name)
+
+        # Skip evaluation if no experimental data available
+        if len(time_exp) == 0 or len(voltage_exp) == 0:
+            print(f"No experimental data for {c_rate}C, skipping evaluation for sample {idx}.")
+            return idx, np.inf
+
+        # Run simulation with provided parameters
+        solution = sim.pybamm_sim_fixed_params(
+            fixed_params=current_params,
+            min_voltage=min_voltage,
+            max_voltage=max_voltage,
+            discharge_cur=c_rate,
+            time_max=time_max,
+            capacity=capacity,
+            temperature=temperature,
+            model_type=model_type
         )
 
-        # 提取数据
-        time = solution["Time [s]"].data
-        voltage = solution["Terminal voltage [V]"].data
+        if solution is None:
+            # Return a high error if simulation fails
+            return idx, np.inf
 
-        # 电压特征
-        mean_voltage = np.mean(voltage)
-        voltage_decay = (voltage[0] - voltage[-1]) / time[-1]  # V/s
-        voltage_stability = np.std(voltage)  # 电压标准差
+        # Extract simulation results
+        time_sim = solution["Time [s]"].entries
+        voltage_sim = solution["Voltage [V]"].entries
 
-        # 计算电压平台平坦度 (使用电压曲线的二阶导数)
-        voltage_gradient = np.gradient(voltage, time)
-        platform_flatness = np.mean(np.abs(np.gradient(voltage_gradient, time)))
+        # Interpolate experimental data to match simulation time points for comparison
+        if len(time_exp) > 1 and len(voltage_exp) > 1:
+            voltage_exp_interp = np.interp(time_sim, time_exp, voltage_exp)
 
-        # 组合特征为综合性能指标
-        # 对各个特征进行归一化和加权
-        weights = {
-            'mean_voltage': 0.5,
-            'voltage_stability': 0.2,
-            'platform_flatness': 0.3,
-        }
-
-        # 归一化处理（这里使用一些典型值作为参考）
-        normalized_features = {
-            'mean_voltage': mean_voltage / max_voltage_base,
-            'voltage_stability': (voltage_stability / mean_voltage) * 100,  # 越稳定越好
-            'platform_flatness': (platform_flatness * 1e6),  # 越平坦越好
-        }
-        for k in weights.keys():
-            print(f'{k}:', normalized_features[k])
-
-        # 计算综合性能指标
-        performance_index = sum(weights[k] * normalized_features[k] for k in weights.keys())
-
-        return performance_index
+            # Calculate root mean square error between simulation and experiment
+            rmse = np.sqrt(np.mean((voltage_sim - voltage_exp_interp) ** 2))
+            return idx, rmse
+        else:
+            return idx, np.inf
 
     except Exception as e:
-        print(f"Simulation failed: {e}")
-        return 0
+        print(f"Error in worker process (sample {idx}): {e}")
+        return idx, np.inf
 
 
-def run_sensitivity_analysis(problem, param_values, Y):
-    """执行敏感性分析并保存结果"""
+def run_sensitivity_analysis(args, base_params):
+    """Run sensitivity analysis across multiple C-rates using multiprocessing."""
+    # Define the problem
+    problem = define_problem()
 
-    # 创建sensitivity文件夹(如果不存在)
-    if not os.path.exists('sensitivity'):
-        os.makedirs('sensitivity')
+    # Generate samples using Saltelli method
+    param_values = saltelli.sample(problem, args.n_samples)
+    total_samples = param_values.shape[0]
+    print(f"Generated {total_samples} parameter combinations for evaluation")
 
-    # 生成时间戳
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    # Sobol分析
-    Si_sobol = sobol.analyze(problem, Y, print_to_console=True, parallel=True, n_processors=16)
-    # PAWN分析
-    Si_pawn = pawn.analyze(problem, param_values, Y)
+    # Define C-rates for analysis
+    c_rates = [0.1, 0.2, 0.33, 1]
 
-    # 创建Sobol结果DataFrame并排序
-    results_sobol = pd.DataFrame({
+    # Get number of CPUs for parallel processing
+    num_cpus = min(mp.cpu_count(), args.max_cpus)
+    print(f"Using {num_cpus} CPU cores for parallel processing")
+
+    # Create directory for results
+    results_dir = "sensitivity_results"
+    os.makedirs(results_dir, exist_ok=True)
+
+    # Store all sensitivity results
+    sensitivity_results = {}
+
+    # Run analysis for each C-rate
+    for c_rate in c_rates:
+        print(f"\n--- Running sensitivity analysis for {c_rate}C ---")
+        start_time = time.time()
+
+        # Initialize array for storing results
+        Y = np.zeros(total_samples)
+
+        # Create a partial function with fixed parameters
+        worker_func = partial(
+            evaluate_model,
+            problem=problem,
+            base_params=base_params,
+            c_rate=c_rate,
+            battery_id=args.battery_id,
+            temperature=args.temperature,
+            model_type=args.model,
+            data_dir=args.data_dir
+        )
+
+        # Create argument list for multiprocessing
+        arg_list = [(param_values[i], i) for i in range(total_samples)]
+
+        # Using multiprocessing to evaluate models in parallel
+        print(f"Running {total_samples} model evaluations in parallel...")
+        with mp.Pool(processes=num_cpus) as pool:
+            # Use tqdm with imap to show progress
+            results = list(tqdm(
+                pool.starmap(worker_func, arg_list),
+                total=total_samples,
+                desc=f"C-rate {c_rate}"
+            ))
+
+        # Process results back into ordered array
+        for idx, rmse in results:
+            Y[idx] = rmse
+
+        elapsed_time = time.time() - start_time
+        print(f"Completed {c_rate}C evaluations in {elapsed_time:.1f} seconds")
+
+        # Save raw model outputs
+        pd.DataFrame({"sample_idx": range(len(Y)), "rmse": Y}).to_csv(
+            os.path.join(results_dir, f"model_outputs_{c_rate}C.csv"), index=False
+        )
+
+        # Handle failed simulations by replacing infinite values
+        Y[np.isinf(Y)] = np.max(Y[~np.isinf(Y)]) * 2 if np.any(~np.isinf(Y)) else 1000
+
+        # Analyze with Sobol method
+        Si = sobol.analyze(problem, Y, print_to_console=True)
+
+        # Save sensitivity indices
+        results = {
+            'S1': Si['S1'],
+            'S1_conf': Si['S1_conf'],
+            'ST': Si['ST'],
+            'ST_conf': Si['ST_conf']
+        }
+        sensitivity_results[c_rate] = results
+
+        # Save to CSV
+        results_df = pd.DataFrame({
+            'Parameter': problem['names'],
+            'S1': Si['S1'],
+            'S1_conf': Si['S1_conf'],
+            'ST': Si['ST'],
+            'ST_conf': Si['ST_conf']
+        })
+        results_df.to_csv(os.path.join(results_dir, f"sensitivity_indices_{c_rate}C.csv"), index=False)
+
+        # Plot sensitivity indices
+        plot_sensitivity_indices(Si, problem, c_rate, results_dir)
+
+    # Compute weighted sensitivity indices across all C-rates
+    # Use weights that emphasize higher C-rates where sensitivity is often more pronounced
+    weights = {0.1: 0.1, 0.2: 0.2, 0.33: 0.3, 1: 0.4}
+
+    # Initialize weighted results
+    weighted_S1 = np.zeros(len(problem['names']))
+    weighted_ST = np.zeros(len(problem['names']))
+
+    # Calculate weighted average
+    for c_rate, result in sensitivity_results.items():
+        weighted_S1 += weights[c_rate] * result['S1']
+        weighted_ST += weights[c_rate] * result['ST']
+
+    # Create and save weighted results
+    weighted_results = pd.DataFrame({
         'Parameter': problem['names'],
-        'First_Order': Si_sobol['S1'],
-        'Total_Order': Si_sobol['ST'],
-        'Confidence_S1': Si_sobol['S1_conf'],
-        'Confidence_ST': Si_sobol['ST_conf']
+        'Weighted_S1': weighted_S1,
+        'Weighted_ST': weighted_ST
     })
-    # 按First_Order降序排序
-    results_sobol = results_sobol.sort_values('First_Order', ascending=False)
+    weighted_results.to_csv(os.path.join(results_dir, "weighted_sensitivity_indices.csv"), index=False)
 
-    # 创建更详细的PAWN结果DataFrame并排序
-    results_pawn = pd.DataFrame({
-        'Parameter': problem['names'],
-        'PAWN_minimum': Si_pawn['minimum'],
-        'PAWN_mean': Si_pawn['mean'],
-        'PAWN_median': Si_pawn['median'],
-        'PAWN_maximum': Si_pawn['maximum'],
-        'PAWN_CV': Si_pawn['CV']
-    })
-    # 按PAWN_median降序排序
-    results_pawn = results_pawn.sort_values('PAWN_median', ascending=False)
+    # Plot weighted sensitivity indices
+    plot_weighted_sensitivity(weighted_results, results_dir)
 
-    # 添加排名列
-    results_sobol.insert(0, 'Rank', np.arange(1, len(results_sobol) + 1))
-    results_pawn.insert(0, 'Rank', np.arange(1, len(results_pawn) + 1))
+    print(f"\nSensitivity analysis complete. Results saved to {results_dir}")
 
-    # 保存结果到CSV
-    results_sobol.to_csv(f'sensitivity/sobol_results_{timestamp}.csv', index=False)
-    results_pawn.to_csv(f'sensitivity/pawn_results_{timestamp}.csv', index=False)
 
-    # 创建比较结果的DataFrame
-    comparison = pd.DataFrame()
+def plot_sensitivity_indices(Si, problem, c_rate, results_dir):
+    """Plot first-order and total-order sensitivity indices."""
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 12))  # Increased height for more parameters
 
-    # 从Sobol结果中获取排序后的参数和对应的值
-    sobol_data = results_sobol[['Parameter', 'First_Order']].copy()
-    sobol_data['Sobol_Rank'] = range(1, len(sobol_data) + 1)
+    # Sort indices by value
+    S1_indices = np.argsort(Si['S1'])
+    ST_indices = np.argsort(Si['ST'])
 
-    # 从PAWN结果中获取排序后的参数和对应的值
-    pawn_data = results_pawn[['Parameter', 'PAWN_median']].copy()
-    pawn_data['PAWN_Rank'] = range(1, len(pawn_data) + 1)
-    # 合并两个结果
-    comparison = sobol_data.merge(pawn_data, on='Parameter', how='outer')
-    # 重命名列
-    comparison.columns = ['Parameter', 'Sobol_First_Order', 'Sobol_Rank', 'PAWN_Median', 'PAWN_Rank']
-    # 按Sobol一阶指数降序排序
-    comparison = comparison.sort_values('Sobol_First_Order', ascending=False)
-    # 保存比较结果
-    comparison.to_csv(f'sensitivity/comparison_results_{timestamp}.csv', index=False)
+    # First-order indices
+    ax1.barh(np.arange(len(problem['names'])), Si['S1'][S1_indices], xerr=Si['S1_conf'][S1_indices])
+    ax1.set_yticks(np.arange(len(problem['names'])))
+    ax1.set_yticklabels([problem['names'][i] for i in S1_indices])
+    ax1.set_title(f'First-Order Sensitivity Indices - {c_rate}C')
+    ax1.set_xlabel('S1')
 
-    # 绘制Sobol结果
-    plt.figure(figsize=(15, 8))
-    plt.bar(np.arange(len(problem['names'])), Si_sobol['S1'])
-    plt.xticks(np.arange(len(problem['names'])), problem['names'], rotation=90)
-    plt.title('First-order Sobol Sensitivity Indices')
-    plt.xlabel('Parameters')
-    plt.ylabel('Sensitivity Index')
+    # Total-order indices
+    ax2.barh(np.arange(len(problem['names'])), Si['ST'][ST_indices], xerr=Si['ST_conf'][ST_indices])
+    ax2.set_yticks(np.arange(len(problem['names'])))
+    ax2.set_yticklabels([problem['names'][i] for i in ST_indices])
+    ax2.set_title(f'Total-Order Sensitivity Indices - {c_rate}C')
+    ax2.set_xlabel('ST')
+
     plt.tight_layout()
-    plt.savefig(f'sensitivity/sobol_first_order_{timestamp}.png')
+    plt.savefig(os.path.join(results_dir, f"sensitivity_plot_{c_rate}C.png"), dpi=300)
     plt.close()
 
-    # 绘制更详细的PAWN结果
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(15, 12))
 
-    # 绘制主要PAWN指标（中位数）
-    ax1.bar(np.arange(len(problem['names'])), Si_pawn['median'])
-    ax1.set_title('PAWN Median Sensitivity Indices')
-    ax1.set_xlabel('Parameters')
-    ax1.set_ylabel('Median KS Statistic')
-    ax1.set_xticks(np.arange(len(problem['names'])))
-    ax1.set_xticklabels(problem['names'], rotation=90)
+def plot_weighted_sensitivity(weighted_results, results_dir):
+    """Plot weighted sensitivity indices across all C-rates."""
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 12))  # Increased height for more parameters
 
-    # 绘制所有PAWN统计量的箱线图
-    data = [
-        [Si_pawn['minimum'][i], Si_pawn['mean'][i],
-         Si_pawn['median'][i], Si_pawn['maximum'][i]]
-        for i in range(len(problem['names']))
-    ]
-    ax2.boxplot(data, tick_labels=problem['names'])
-    ax2.set_title('PAWN Sensitivity Statistics Distribution')
-    ax2.set_xlabel('Parameters')
-    ax2.set_ylabel('KS Statistic')
-    plt.xticks(rotation=90)
+    # Sort by weighted values
+    sorted_S1 = weighted_results.sort_values('Weighted_S1')
+    sorted_ST = weighted_results.sort_values('Weighted_ST')
+
+    # First-order weighted indices
+    ax1.barh(np.arange(len(sorted_S1)), sorted_S1['Weighted_S1'])
+    ax1.set_yticks(np.arange(len(sorted_S1)))
+    ax1.set_yticklabels(sorted_S1['Parameter'])
+    ax1.set_title('Weighted First-Order Sensitivity Indices (Across All C-rates)')
+    ax1.set_xlabel('Weighted S1')
+
+    # Total-order weighted indices
+    ax2.barh(np.arange(len(sorted_ST)), sorted_ST['Weighted_ST'])
+    ax2.set_yticks(np.arange(len(sorted_ST)))
+    ax2.set_yticklabels(sorted_ST['Parameter'])
+    ax2.set_title('Weighted Total-Order Sensitivity Indices (Across All C-rates)')
+    ax2.set_xlabel('Weighted ST')
 
     plt.tight_layout()
-    plt.savefig(f'sensitivity/pawn_detailed_{timestamp}.png')
+    plt.savefig(os.path.join(results_dir, "weighted_sensitivity_plot.png"), dpi=300)
     plt.close()
 
-    return Si_sobol, Si_pawn
+
+def main():
+    parser = argparse.ArgumentParser(description="Run sensitivity analysis for PyBaMM battery simulations.")
+    parser.add_argument('--battery_id', type=str, default="81#", help='Identifier for the battery (e.g., 81#).')
+    parser.add_argument('--temperature', type=int, default=25, help='Operating temperature in Celsius.')
+    parser.add_argument('--model', type=str, choices=["DFN", "SPM"], default="DFN", help='PyBaMM Model Type (DFN or SPM).')
+    parser.add_argument('--data_dir', type=str, default="./bat_data", help='Directory containing experimental CSV files.')
+    parser.add_argument('--n_samples', type=int, default=128, help='Number of samples per parameter (Saltelli method). Default reduced to 8 due to high dimensionality.')
+    parser.add_argument('--max_cpus', type=int, default=mp.cpu_count(), help=f'Maximum number of CPU cores to use. Default: all ({mp.cpu_count()} cores).')
+    parser.add_argument('--skip_c_rates', type=str, default="", help='Comma-separated list of C-rates to skip (e.g., "0.1,0.2").')
+
+    args = parser.parse_args()
+
+    # Base parameters that won't be varied in sensitivity analysis
+    base_params = {"Negative_current_collector_thickness": 1.5e-5, "Positive_current_collector_thickness": 2.0e-5,
+                   "Separator_porosity": 0.5, "Separator_density": 1100.0, "Separator_specific_heat_capacity": 1900.0}
+
+    # Add current collector thicknesses which are fixed per the table
+
+    # Print start message with configuration details
+    print(f"\n{'=' * 80}")
+    print(f"BATTERY PARAMETER SENSITIVITY ANALYSIS WITH MULTIPROCESSING")
+    print(f"{'=' * 80}")
+    print(f"Configuration:")
+    print(f"  - Battery ID: {args.battery_id}")
+    print(f"  - Temperature: {args.temperature}°C")
+    print(f"  - Model type: {args.model}")
+    print(f"  - Sample size: {args.n_samples} (generating {(2 * args.n_samples + 2) * 34} total model evaluations per C-rate)")
+    print(f"  - Using up to {args.max_cpus} CPU cores")
+    print(f"  - Data directory: {args.data_dir}")
+    print(f"{'=' * 80}\n")
+
+    # Start processing time
+    total_start_time = time.time()
+
+    # Run sensitivity analysis
+    run_sensitivity_analysis(args, base_params)
+
+    # Report total time
+    total_elapsed = time.time() - total_start_time
+    hours, remainder = divmod(total_elapsed, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    print(f"\nTotal analysis time: {int(hours)}h {int(minutes)}m {seconds:.1f}s")
 
 
 if __name__ == '__main__':
-    # 定义参数空间
-    # 创建sensitivity文件夹(如果不存在)
-    if not os.path.exists('sensitivity'):
-        os.makedirs('sensitivity')
-    # 生成时间戳
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    problem = {
-        'num_vars': 42,
-        'names': [
-            'electrode_height',
-            'electrode_width',
-            'Negative_electrode_conductivity',
-            'Positive_electrode_diffusivity',
-            'Positive_particle_radius',
-            'Initial_concentration_in_positive_electrode',
-            'Initial_concentration_in_negative_electrode',
-            'Positive_electrode_conductivity',
-            'Negative_particle_radius',
-            'Negative_electrode_thickness',
-            'Total_heat_transfer_coefficient',
-            'Separator_density',
-            'Separator_thermal_conductivity',
-            'Positive_electrode_porosity',
-            'Separator_specific_heat_capacity',
-            'Maximum_concentration_in_positive_electrode',
-            'Negative_electrode_Bruggeman_coefficient',
-            'Positive_electrode_Bruggeman_coefficient',
-            'Separator_porosity',
-            'Negative_current_collector_thickness',
-            'Positive_current_collector_thickness',
-            'Positive_electrode_thickness',
-            'Positive_electrode_active_material_volume_fraction',
-            'Negative_electrode_specific_heat_capacity',
-            'Positive_electrode_thermal_conductivity',
-            'Negative_electrode_active_material_volume_fraction',
-            'Negative_electrode_density',
-            'Positive_electrode_specific_heat_capacity',
-            'Positive_electrode_density',
-            'Negative_electrode_thermal_conductivity',
-            'Cation_transference_number',
-            'Positive_current_collector_thermal_conductivity',
-            'Negative_current_collector_thermal_conductivity',
-            'Separator_Bruggeman_coefficient',
-            'Maximum_concentration_in_negative_electrode',
-            'Positive_current_collector_density',
-            'Negative_current_collector_density',
-            'Positive_current_collector_conductivity',
-            'Negative_current_collector_conductivity',
-            'Negative_electrode_porosity',
-            'min_voltage',
-            'max_voltage'
-        ],
-        'bounds': [[0, 1] for _ in range(42)]  # 所有参数都在0-1之间
-    }
-    # 主程序
-    N = 512  # 样本数
-    param_values = saltelli.sample(problem, N)
-
-    # 执行模拟
-    Y = np.zeros([param_values.shape[0]])
-    for i, params in enumerate(param_values):
-        print(f"Running simulation {i + 1}/{len(param_values)}")
-        Y[i] = analyze_battery_performance(params)
-
-    # 运行敏感性分析并保存结果
-    Si_sobol, Si_pawn = run_sensitivity_analysis(problem, param_values, Y)
-
-    # 打印排序后的Sobol结果
-    print("\nParameters ranked by first-order Sobol sensitivity index:")
-    sensitivity_results = list(zip(problem['names'], Si_sobol['S1'], Si_sobol['ST']))
-    sensitivity_results.sort(key=lambda x: x[1], reverse=True)
-    for name, S1, ST in sensitivity_results:
-        print(f"{name:50s} First-order: {S1:.4f} Total-order: {ST:.4f}")
-
-    # 打印详细的PAWN结果
-    print("\nDetailed PAWN sensitivity analysis results:")
-    pawn_results = list(zip(
-        problem['names'],
-        Si_pawn['minimum'],
-        Si_pawn['mean'],
-        Si_pawn['median'],
-        Si_pawn['maximum'],
-        Si_pawn['CV']
-    ))
-    pawn_results.sort(key=lambda x: x[3], reverse=True)  # 按中位数排序
-
-    print("\nParameter | Min | Mean | Median | Max | CV")
-    print("-" * 70)
-    for name, min_val, mean_val, median_val, max_val, cv in pawn_results:
-        print(f"{name:30s} | {min_val:.4f} | {mean_val:.4f} | {median_val:.4f} | {max_val:.4f} | {cv:.4f}")
+    main()

@@ -14,15 +14,6 @@ from joblib import Parallel, delayed
 
 
 def read_csv_solution(csv_file):
-    """
-    Read the first solution from the CSV file produced by Bayesian optimization.
-
-    Args:
-        csv_file (str): Path to the CSV file containing Bayesian optimization results
-
-    Returns:
-        np.ndarray: The best parameter set from Bayesian optimization
-    """
     try:
         # Read the CSV file
         df = pd.read_csv(csv_file)
@@ -45,30 +36,10 @@ def read_csv_solution(csv_file):
 
 
 def min_max_func(low, high, norm_value):
-    """
-    Scale a normalized value (0-1) to a specified range.
-
-    Args:
-        low (float): Lower bound of the range
-        high (float): Upper bound of the range
-        norm_value (float): Normalized value between 0 and 1
-
-    Returns:
-        float: Scaled value between low and high
-    """
     return norm_value * (high - low) + low
 
 
 def read_file(file_name):
-    """
-    Read battery data file and extract key parameters.
-
-    Args:
-        file_name (str): Path to battery data CSV file
-
-    Returns:
-        tuple: time_max, voltage_max, voltage_min, capacity
-    """
     data = pd.read_csv(file_name)
     time_max = data['time'].values[-1]
     voltage_max = data['V'].values[0]
@@ -78,22 +49,6 @@ def read_file(file_name):
 
 
 def pybamm_sim(param, min_voltage, max_voltage, discharge_cur, time_max, capacity, temperature, file):
-    """
-    Run a PyBAMM simulation with the given parameters.
-
-    Args:
-        param (np.ndarray): Array of normalized battery parameters
-        min_voltage (float): Minimum voltage cutoff
-        max_voltage (float): Maximum voltage cutoff
-        discharge_cur (float): Discharge current rate
-        time_max (float): Maximum simulation time
-        capacity (float): Battery capacity
-        temperature (float): Operating temperature
-        file (str): Path to battery data file
-
-    Returns:
-        tuple: parameter_values, solution
-    """
     # Map normalized parameters to physical parameters
     electrode_height = min_max_func(0.6, 1, param[0])
     electrode_width = min_max_func(25, 30, param[1])
@@ -189,17 +144,6 @@ def pybamm_sim(param, min_voltage, max_voltage, discharge_cur, time_max, capacit
 
 
 def compute_time_discharge(sol, file_path, soc_range=(0.9, 1)):
-    """
-    Compute RMSE between simulation and experimental discharge curves.
-
-    Args:
-        sol (pybamm.Solution): PyBAMM solution object
-        file_path (str): Path to experimental data file
-        soc_range (tuple): SOC range to consider for RMSE calculation
-
-    Returns:
-        tuple: time_resampled_out, voltage_sim_filtered, voltage_real_filtered, soc_resampled_out, rmse_value
-    """
     # Extract simulation time and voltage
     time_simulation = sol["Time [s]"].entries
     voltage_simulation = sol["Voltage [V]"].entries
@@ -260,18 +204,6 @@ def compute_time_discharge(sol, file_path, soc_range=(0.9, 1)):
 
 
 def main_simulation(param, soc_range, save=False, plot=False):
-    """
-    Run simulation for all battery test conditions and compute RMSE.
-
-    Args:
-        param (np.ndarray): Battery parameter array
-        soc_range (str or tuple): SOC range for RMSE calculation
-        save (bool): Whether to save simulation results
-        plot (bool): Whether to plot results
-
-    Returns:
-        list: RMSE values for all test conditions
-    """
     # Set experiment names and process them
     names = name.split(",")
     file_list = [f"./bat_data/{single}.csv" for single in names]
@@ -337,17 +269,6 @@ def main_simulation(param, soc_range, save=False, plot=False):
 
 
 def run_with_timeout(param, soc_range, timeout=15):
-    """
-    Run simulation with timeout to avoid hanging processes.
-
-    Args:
-        param (np.ndarray): Battery parameter array
-        soc_range (str or tuple): SOC range for RMSE calculation
-        timeout (int): Timeout in seconds
-
-    Returns:
-        tuple: RMSE values, error reason
-    """
     # Create a manager for sharing data between processes
     manager = multiprocessing.Manager()
     return_dict = manager.dict()
@@ -389,53 +310,42 @@ def run_with_timeout(param, soc_range, timeout=15):
         return [1.5] * len(name.split(",")), reason
 
 
-def evaluate_objective(param):
-    """
-    Objective function for optimization - overall RMSE across all test conditions.
-
-    Args:
-        param (np.ndarray): Battery parameter array
-
-    Returns:
-        float: Maximum RMSE value across all test conditions
-    """
-    soc_range = 'all'
-    all_time_rmse, reason = run_with_timeout(param, soc_range)
+def obj_func(solution, soc_range):
+    all_time_rmse, reason = run_with_timeout(solution, soc_range)
     obj = max(all_time_rmse)
-
-    print(f"Normalized parameters: {param}")
-    print(f"RMSE values (V): {all_time_rmse}")
-    print(f"Objective value (max RMSE): {obj}")
-    print(f"Status: {reason}")
-
+    print("\033[31m Norm Solution Value\033[0m", solution)
+    print("\033[31m RMSE (V):\033[0m", [mv for mv in all_time_rmse])
+    print("\033[31m Value (V):\033[0m", obj)
+    print("\033[31m Error Reason:\033[0m", reason)
     return obj
 
 
+# 评估函数
+def eval_objective(x):
+    """返回整体的RMSE"""
+    soc_range = 'all'
+    return obj_func(x, soc_range)  # 您需要实现obj_func
+
+
+def eval_c1(x):
+    """低SOC段的约束条件: RMSE < 20mV"""
+    soc_range = (0.1, 0.3)
+    return obj_func(x, soc_range) - 0.02  # 转换为约束形式 c1(x) <= 0
+
+
+def eval_c2(x):
+    """高SOC段的约束条件: RMSE < 20mV"""
+    soc_range = (0.7, 0.9)
+    return obj_func(x, soc_range) - 0.02  # 转换为约束形式 c2(x) <= 0
+
+
 def optimize_without_constraints(initial_params):
-    """
-    Optimize battery parameters using CYIPOPT without constraints.
-
-    Args:
-        initial_params (np.ndarray): Initial parameter values from Bayesian optimization
-
-    Returns:
-        tuple: Optimized parameters, final objective value
-    """
     print("Starting local optimization with IPOPT (unconstrained)...")
     print(f"Initial parameters: {initial_params}")
 
     class UnconstrainedBatteryProblem:
-        """
-        Class defining the battery parameter optimization problem for IPOPT without constraints.
-        """
-
         def __init__(self, initial_params):
-            """
-            Initialize the optimization problem.
 
-            Args:
-                initial_params (np.ndarray): Initial parameter values from Bayesian optimization
-            """
             self.initial_params = initial_params
             self.dim = len(initial_params)
             self.eval_count = 0
@@ -448,19 +358,10 @@ def optimize_without_constraints(initial_params):
             self.all_evaluations = []
 
         def objective(self, x):
-            """
-            Objective function for IPOPT.
-
-            Args:
-                x (np.ndarray): Battery parameter array
-
-            Returns:
-                float: Objective value (maximum RMSE)
-            """
             self.eval_count += 1
             print(f"\nEvaluation #{self.eval_count}")
 
-            obj = evaluate_objective(x)
+            obj = eval_objective(x)
 
             # Record evaluation
             self.all_evaluations.append({
@@ -477,15 +378,6 @@ def optimize_without_constraints(initial_params):
             return obj
 
         def gradient(self, x):
-            """
-            Gradient approximation using finite differences.
-
-            Args:
-                x (np.ndarray): Battery parameter array
-
-            Returns:
-                np.ndarray: Gradient vector
-            """
             # Use forward finite differences for efficiency
             epsilon = 1e-5
             grad = np.zeros(self.dim)
@@ -513,12 +405,6 @@ def optimize_without_constraints(initial_params):
 
         def intermediate(self, alg_mod, iter_count, obj_value, inf_pr, inf_du, mu, d_norm,
                          regularization_size, alpha_du, alpha_pr, ls_trials):
-            """
-            Callback function for IPOPT intermediate iterations.
-
-            Args:
-                Various IPOPT iteration data
-            """
             print(f"Iteration {iter_count}: Objective = {obj_value}")
             print(f"Current best RMSE = {self.best_obj}")
 
@@ -569,18 +455,170 @@ def optimize_without_constraints(initial_params):
             return problem.best_params, problem.best_obj
         else:
             print("Returning initial parameters...")
-            return initial_params, evaluate_objective(initial_params)
+            return initial_params, eval_objective(initial_params)
+
+
+def optimize_with_constraints(initial_params):
+    print("Starting local optimization with IPOPT (with constraints)...")
+    print(f"Initial parameters: {initial_params}")
+
+    class ConstrainedBatteryProblem:
+        def __init__(self, initial_params):
+            self.initial_params = initial_params
+            self.dim = len(initial_params)
+            self.eval_count = 0
+
+            # Record best solution
+            self.best_params = None
+            self.best_obj = float('inf')
+
+            # Record all evaluations
+            self.all_evaluations = []
+
+        def objective(self, x):
+            self.eval_count += 1
+            print(f"\nEvaluation #{self.eval_count}")
+
+            obj = eval_objective(x)
+
+            # Record evaluation
+            self.all_evaluations.append({
+                'params': x.copy(),
+                'obj': obj
+            })
+
+            # Update best solution if needed
+            if obj < self.best_obj:
+                self.best_obj = obj
+                self.best_params = x.copy()
+                print(f"New best solution found! RMSE: {obj}")
+
+            return obj
+
+        def constraints(self, x):
+            # Return both constraints as a numpy array
+            return np.array([
+                eval_c1(x),  # Low SOC constraint (RMSE < 20mV for SOC 0.1-0.3)
+                eval_c2(x)  # High SOC constraint (RMSE < 20mV for SOC 0.7-0.9)
+            ])
+
+        def gradient(self, x):
+            # Use forward finite differences for efficiency
+            epsilon = 1e-5
+            grad = np.zeros(self.dim)
+
+            # Base objective value
+            f0 = self.objective(x)
+
+            for i in range(self.dim):
+                # Create perturbation vector
+                h = np.zeros(self.dim)
+                h[i] = epsilon
+
+                # Forward evaluation (clipping to ensure bounds)
+                x_plus = np.clip(x + h, 0, 1)
+                f_plus = self.objective(x_plus)
+
+                # Forward difference
+                dx = x_plus[i] - x[i]  # Actual step size after clipping
+                if abs(dx) > 1e-10:  # Protect against division by zero
+                    grad[i] = (f_plus - f0) / dx
+                else:
+                    grad[i] = 0.0
+
+            return grad
+
+        def jacobian(self, x):
+            # Calculate jacobian of constraints using finite differences
+            epsilon = 1e-5
+            jac = np.zeros((2, self.dim))  # 2 constraints, dim variables
+
+            # Base constraint values
+            c0 = self.constraints(x)
+
+            for i in range(self.dim):
+                # Create perturbation vector
+                h = np.zeros(self.dim)
+                h[i] = epsilon
+
+                # Forward evaluation (clipping to ensure bounds)
+                x_plus = np.clip(x + h, 0, 1)
+                c_plus = self.constraints(x_plus)
+
+                # Forward difference
+                dx = x_plus[i] - x[i]  # Actual step size after clipping
+                if abs(dx) > 1e-10:  # Protect against division by zero
+                    jac[0, i] = (c_plus[0] - c0[0]) / dx  # Jacobian for first constraint
+                    jac[1, i] = (c_plus[1] - c0[1]) / dx  # Jacobian for second constraint
+                else:
+                    jac[0, i] = 0.0
+                    jac[1, i] = 0.0
+
+            return jac
+
+        def intermediate(self, alg_mod, iter_count, obj_value, inf_pr, inf_du, mu, d_norm,
+                         regularization_size, alpha_du, alpha_pr, ls_trials):
+            print(f"Iteration {iter_count}: Objective = {obj_value}, Constraint violation = {inf_pr}")
+            print(f"Current best RMSE = {self.best_obj}")
+
+            # Save intermediate results periodically
+            if iter_count % 5 == 0:
+                if self.best_params is not None:
+                    save_results(self.best_params, self.best_obj,
+                                 f"./solutions/Local/{file_name}_intermediate.json")
+
+    # Create problem instance
+    problem = ConstrainedBatteryProblem(initial_params)
+
+    # Define bounds (all parameters between 0 and 1)
+    lb = np.zeros(problem.dim)
+    ub = np.ones(problem.dim)
+
+    # Create IPOPT problem (with constraints)
+    nlp = cyipopt.Problem(
+        n=problem.dim,  # Number of variables
+        m=2,  # Number of constraints (2 for our case)
+        problem_obj=problem,  # Problem instance
+        lb=lb,  # Lower bounds on variables
+        ub=ub,  # Upper bounds on variables
+        cl=np.array([-np.inf, -np.inf]),  # Lower bounds on constraints (c <= 0, so -inf)
+        cu=np.array([0.0, 0.0])  # Upper bounds on constraints (c <= 0)
+    )
+
+    # Set IPOPT options
+    nlp.add_option('tol', 1e-4)
+    nlp.add_option('max_iter', 50)
+    nlp.add_option('print_level', 5)
+    nlp.add_option('mu_strategy', 'adaptive')
+    nlp.add_option('hessian_approximation', 'limited-memory')  # Use L-BFGS approximation
+
+    # Run optimization
+    try:
+        x_opt, info = nlp.solve(initial_params)
+        print("\nOptimization Results:")
+        print(f"Final optimal parameters: {x_opt}")
+        print(f"Final RMSE: {problem.best_obj}")
+        print(f"Number of iterations: {info['iter_count']}")
+
+        # Verify constraints are satisfied
+        c_final = problem.constraints(x_opt)
+        print(f"Final constraints: {c_final}")
+        print(f"Constraints satisfied: {all(c <= 0 for c in c_final)}")
+
+        # Return the best parameters found during optimization
+        return problem.best_params if problem.best_params is not None else x_opt, problem.best_obj
+    except Exception as e:
+        print(f"Optimization failed: {e}")
+
+        if problem.best_params is not None:
+            print("Returning best parameters found during optimization...")
+            return problem.best_params, problem.best_obj
+        else:
+            print("Returning initial parameters...")
+            return initial_params, eval_objective(initial_params)
 
 
 def save_results(params, rmse, filename):
-    """
-    Save optimization results to a JSON file.
-
-    Args:
-        params (np.ndarray): Optimized battery parameters
-        rmse (float): Final RMSE value
-        filename (str): Output filename
-    """
     # Ensure directory exists
     os.makedirs("./solutions/Local", exist_ok=True)
 
@@ -598,13 +636,6 @@ def save_results(params, rmse, filename):
 
 
 def plot_comparison(bayes_params, ipopt_params):
-    """
-    Plot comparison between Bayesian optimization and IPOPT results.
-
-    Args:
-        bayes_params (np.ndarray): Parameters from Bayesian optimization
-        ipopt_params (np.ndarray): Parameters after IPOPT optimization
-    """
     # Run simulations with both parameter sets
     bayes_rmse = main_simulation(bayes_params, 'all', save=True, plot=True)
     ipopt_rmse = main_simulation(ipopt_params, 'all', save=True, plot=True)
@@ -641,9 +672,6 @@ def plot_comparison(bayes_params, ipopt_params):
 
 
 def main():
-    """
-    Main function to run local optimization starting from Bayesian results.
-    """
     parser = argparse.ArgumentParser(description="Run local optimization using IPOPT")
     parser.add_argument('--filename', type=str, default="81#-T25-0.1C,81#-T25-0.2C,81#-T25-0.33C,81#-T25-1C",
                         help='Battery data files (comma-separated)')
@@ -651,6 +679,8 @@ def main():
                         help='Battery model type')
     parser.add_argument('--bayes_result', type=str,
                         help='Path to Bayesian optimization results CSV')
+    parser.add_argument('--use_constraints', action='store_true', default=True,
+                        help='Use constraints in optimization')
     args = parser.parse_args()
 
     global name, model_type, file_name, subdir_name
@@ -674,11 +704,18 @@ def main():
     print(f"Loading Bayesian optimization results from: {bayes_csv}")
     bayes_solution = read_csv_solution(bayes_csv)
 
-    # Run unconstrained local optimization with IPOPT
-    ipopt_solution, final_rmse = optimize_without_constraints(bayes_solution)
+    # Run optimization with or without constraints
+    if args.use_constraints:
+        print("Running optimization with constraints...")
+        ipopt_solution, final_rmse = optimize_with_constraints(bayes_solution)
+        constraint_status = "_constrained"
+    else:
+        print("Running optimization without constraints...")
+        ipopt_solution, final_rmse = optimize_without_constraints(bayes_solution)
+        constraint_status = "_unconstrained"
 
     # Save results
-    save_results(ipopt_solution, final_rmse, f"./solutions/Local/{file_name}.json")
+    save_results(ipopt_solution, final_rmse, f"./solutions/Local/{file_name}{constraint_status}.json")
 
     # Plot comparison between Bayesian and IPOPT results
     plot_comparison(bayes_solution, ipopt_solution)

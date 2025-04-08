@@ -4,6 +4,7 @@
     <configs>
       <sshConfig authType="PASSWORD" host="10.11.13.93" id="1e654dc5-90f2-4591-ae87-981edfbcd330" port="22" nameFormat="DESCRIPTIVE" username="gx" useOpenSSHConfig="true" />
       <sshConfig authType="PASSWORD" host="192.168.1.167" id="b389bfdb-83b7-47cb-934b-59989aefef75" port="22" nameFormat="DESCRIPTIVE" username="ido" useOpenSSHConfig="true" />
+      <sshConfig authType="PASSWORD" host="10.244.227.160" id="63653f47-2323-42b8-888a-cc702f408ead" port="22" nameFormat="DESCRIPTIVE" username="gx" useOpenSSHConfig="true" />
     </configs>
   </component>
 </project>
