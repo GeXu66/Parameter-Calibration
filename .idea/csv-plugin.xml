@@ -3,6 +3,55 @@
   <component name="CsvFileAttributes">
     <option name="attributeMap">
       <map>
+        <entry key="&lt;c4609e24-515b-47f2-ab01-3f4df7630c39&gt;\Parameter-Calibration\bat_data\81#-T25-1C.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="&lt;c4609e24-515b-47f2-ab01-3f4df7630c39&gt;\Parameter-Calibration\bat_data\82#-T25-0.1C.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="&lt;c4609e24-515b-47f2-ab01-3f4df7630c39&gt;\Parameter-Calibration\bat_data\82#-T25-0.2C.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="&lt;c4609e24-515b-47f2-ab01-3f4df7630c39&gt;\Parameter-Calibration\bat_data\82#-T25-0.33C.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="&lt;c4609e24-515b-47f2-ab01-3f4df7630c39&gt;\Parameter-Calibration\bat_data\82#-T25-1C.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="&lt;c4609e24-515b-47f2-ab01-3f4df7630c39&gt;\Parameter-Calibration\solutions\Bayes\81#MO-Constraint-DFN-17.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="&lt;c4609e24-515b-47f2-ab01-3f4df7630c39&gt;\Parameter-Calibration\solutions\Bayes\82#MO-Constraint-DFN-17.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="\bat_data\81#-T25-0.1C.csv">
           <value>
             <Attribute>

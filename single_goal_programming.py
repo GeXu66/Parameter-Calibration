@@ -35,7 +35,7 @@ def read_file(file_name):
     data = pd.read_csv(file_name)
     time_max = data['time'].values[-1]
     voltage_max = data['V'].values[0]
-    voltage_min = data['V'].values[-1] - 1
+    voltage_min = data['V'].values[-1]
     capacity = data['Ah'].values[-1]
     return time_max, voltage_max, voltage_min, capacity
 
@@ -122,7 +122,7 @@ def compute_time_discharge(sol, file_path, soc_range=(0.9, 1)):
     return time_resampled_out, voltage_sim_filtered, voltage_real_filtered, soc_resampled_out, rmse_value
 
 
-def pybamm_sim(param, min_voltage, max_voltage, discharge_cur, time_max, capacity, temperature, file):
+def pybamm_sim(param, min_voltage, max_voltage, discharge_cur, time_max, capacity, temperature):
     # 根据新的参数列表定义映射范围，基于固定参数值的左右范围
     N_parallel = min_max_func(180, 220, param[0])
     electrode_height = min_max_func(0.17, 0.22, param[1])
@@ -133,22 +133,17 @@ def pybamm_sim(param, min_voltage, max_voltage, discharge_cur, time_max, capacit
     Positive_electrode_active_material_volume_fraction = min_max_func(0.45, 0.6, param[5])
     Negative_electrode_active_material_volume_fraction = min_max_func(0.48, 0.62, param[6])
     Positive_electrode_porosity = min_max_func(0.32, 0.45, param[7])
-    Negative_electrode_porosity = min_max_func(0.32, 0.45, param[8])
-    Separator_porosity = min_max_func(0.4, 0.6, param[9])
+    Separator_porosity = min_max_func(0.4, 0.6, param[8])
 
-    Positive_electrode_diffusivity = min_max_func(1e-13, 1e-12, param[10])
-    Negative_electrode_diffusivity = min_max_func(1e-13, 1e-12, param[11])
-    Positive_particle_radius = min_max_func(1e-6, 4e-6, param[12])
-    Negative_particle_radius = min_max_func(2e-6, 5e-6, param[13])
-    Negative_electrode_conductivity = min_max_func(50.0, 150.0, param[14])
-    Positive_electrode_conductivity = min_max_func(30.0, 80.0, param[15])
-    Negative_electrode_Bruggeman_coefficient = min_max_func(1.2, 2.0, param[16])
-    Positive_electrode_Bruggeman_coefficient = min_max_func(1.2, 2.0, param[17])
+    Positive_electrode_diffusivity = min_max_func(1e-13, 1e-12, param[9])
+    Negative_particle_radius = min_max_func(2e-6, 5e-6, param[10])
+    Negative_electrode_conductivity = min_max_func(50.0, 150.0, param[11])
+    Positive_electrode_conductivity = min_max_func(30.0, 80.0, param[12])
+    Negative_electrode_Bruggeman_coefficient = min_max_func(1.2, 2.0, param[13])
 
-    Initial_concentration_in_positive_electrode = min_max_func(25000.0, 32000.0, param[18])
-    Initial_concentration_in_negative_electrode = min_max_func(4000.0, 6000.0, param[19])
-    Maximum_concentration_in_positive_electrode = min_max_func(45000.0, 58000.0, param[20])
-    Maximum_concentration_in_negative_electrode = min_max_func(25000.0, 35000.0, param[21])
+    Initial_concentration_in_positive_electrode = min_max_func(25000.0, 32000.0, param[14])
+    Initial_concentration_in_negative_electrode = min_max_func(4000.0, 6000.0, param[15])
+    Maximum_concentration_in_positive_electrode = min_max_func(45000.0, 58000.0, param[16])
 
     parameter_values = pybamm.ParameterValues("Prada2013")
     option = {"cell geometry": "arbitrary", "thermal": "lumped", "contact resistance": "false"}
@@ -158,7 +153,7 @@ def pybamm_sim(param, min_voltage, max_voltage, discharge_cur, time_max, capacit
         model = pybamm.lithium_ion.SPM()
     exp = pybamm.Experiment(
         [(
-            f"Discharge at {discharge_cur} C for {time_max} seconds",
+            f"Discharge at {discharge_cur}C for {time_max} seconds",
         )]
     )
 
@@ -182,31 +177,26 @@ def pybamm_sim(param, min_voltage, max_voltage, discharge_cur, time_max, capacit
         "Positive electrode active material volume fraction": Positive_electrode_active_material_volume_fraction,
         "Negative electrode active material volume fraction": Negative_electrode_active_material_volume_fraction,
         "Positive electrode porosity": Positive_electrode_porosity,
-        "Negative electrode porosity": Negative_electrode_porosity,
         "Separator porosity": Separator_porosity,
 
         # 传输特性参数
         "Positive electrode diffusivity [m2.s-1]": Positive_electrode_diffusivity,
-        "Negative electrode diffusivity [m2.s-1]": Negative_electrode_diffusivity,
-        "Positive particle radius [m]": Positive_particle_radius,
         "Negative particle radius [m]": Negative_particle_radius,
         "Negative electrode conductivity [S.m-1]": Negative_electrode_conductivity,
         "Positive electrode conductivity [S.m-1]": Positive_electrode_conductivity,
         "Negative electrode Bruggeman coefficient (electrolyte)": Negative_electrode_Bruggeman_coefficient,
-        "Positive electrode Bruggeman coefficient (electrolyte)": Positive_electrode_Bruggeman_coefficient,
 
         # 浓度参数
         "Initial concentration in positive electrode [mol.m-3]": Initial_concentration_in_positive_electrode,
         "Initial concentration in negative electrode [mol.m-3]": Initial_concentration_in_negative_electrode,
         "Maximum concentration in positive electrode [mol.m-3]": Maximum_concentration_in_positive_electrode,
-        "Maximum concentration in negative electrode [mol.m-3]": Maximum_concentration_in_negative_electrode,
 
     }
 
     # Update the parameter value
     parameter_values.update(param_dict, check_already_exists=False)
     # Define the parameter to vary
-    safe_solver = pybamm.CasadiSolver(mode="safe", dt_max=120)
+    safe_solver = pybamm.CasadiSolver(mode="safe", dt_max=60)
     # Create a simulation
     sim = pybamm.Simulation(model, parameter_values=parameter_values, solver=safe_solver, experiment=exp)
     # Run the simulation
@@ -216,7 +206,6 @@ def pybamm_sim(param, min_voltage, max_voltage, discharge_cur, time_max, capacit
 
 
 def main_simulationMO(param, soc_range, save=False, plot=False):
-    param_list = ["Ai2020", "Chen2020", "Prada2013"]
     # pybamm.set_logging_level("NOTICE")
     names = name.split(",")
     file_list = [f"./bat_data/{single}.csv" for single in names]
@@ -225,7 +214,7 @@ def main_simulationMO(param, soc_range, save=False, plot=False):
         discharge_cur = float(names[i].split("-")[-1].replace("C", ""))
         temperature = int(names[i].split("-")[1].replace("T", ""))
         time_max, max_voltage, min_voltage, capacity = read_file(file_name=file)
-        parameter_values, sol = pybamm_sim(param, min_voltage, max_voltage, discharge_cur, time_max, capacity, temperature, file)
+        parameter_values, sol = pybamm_sim(param, min_voltage, max_voltage, discharge_cur, time_max, capacity, temperature)
         # soc_resampled, soc_voltage_simulation_resampled, soc_voltage_resampled, soc_rmse_value = compute_soc_discharge(sol=sol, capacity=parameter_values["Nominal cell capacity [A.h]"],file_path=file)
         time_resampled_out, voltage_sim_filtered, voltage_real_filtered, soc_resampled_out, rmse_value = compute_time_discharge(sol=sol, file_path=file, soc_range=soc_range)
         all_time_rmse.append(rmse_value)
@@ -387,10 +376,10 @@ def get_initial_points(dim, n_pts, seed=0):
     sobol = SobolEngine(dimension=dim, scramble=True, seed=seed)
     X_init = sobol.draw(n=n_pts).to(dtype=dtype, device=device)
     base_name = name.split(",")[0].split("-")[0]
-    bayes_csv = f"./solutions/Bayes/{base_name}MO-Constraint-{model_type}-32.csv"
-    # for i in range(n_pts):
-    #     print(f"Loading Bayesian optimization results {i + 1} from: {bayes_csv}")
-    #     X_init[i] = torch.tensor(read_csv_solution(bayes_csv, i), **tkwargs)
+    bayes_csv = f"./solutions/Bayes/{base_name}MO-Constraint-{model_type}-{dim}.csv"
+    for i in range(n_pts):
+        print(f"Loading Bayesian optimization results {i + 1} from: {bayes_csv}")
+        X_init[i] = torch.tensor(read_csv_solution(bayes_csv, i), **tkwargs)
     return X_init
 
 
@@ -505,7 +494,7 @@ def optimize_battery_params():
     train_X = get_initial_points(dim, n_init)
 
     # 并行计算初始点的目标值和约束
-    njobs = 24
+    njobs = -1
     train_Y_list = Parallel(n_jobs=njobs, prefer="threads")(delayed(eval_objective)(x) for x in train_X)
     C1_list = Parallel(n_jobs=njobs, prefer="threads")(delayed(eval_c1)(x) for x in train_X)
     C2_list = Parallel(n_jobs=njobs, prefer="threads")(delayed(eval_c2)(x) for x in train_X)
@@ -673,7 +662,7 @@ if __name__ == '__main__':
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     dtype = torch.double
     tkwargs = {"device": device, "dtype": dtype}
-    dim = 22
+    dim = 17
     lb = torch.zeros(dim, **tkwargs)
     ub = torch.ones(dim, **tkwargs)
     bounds = torch.stack([lb, ub])
@@ -683,11 +672,12 @@ if __name__ == '__main__':
     print("devce:", device)
     dtype = torch.double
 
-    name_list = ["81#-T25-0.1C", "81#-T25-0.2C", "81#-T25-0.33C", "81#-T25-1C"]
+    # name_list = ["81#-T25-0.1C", "81#-T25-0.2C", "81#-T25-0.33C", "81#-T25-1C"]
+    name_list = ["82#-T25-0.1C", "82#-T25-0.2C", "82#-T25-0.33C", "82#-T25-1C"]
     parser = argparse.ArgumentParser(description="Run Bayes optimization or load solution.")
     # 设置默认参数值
     default_train = True
-    default_filename = "81#-T25-0.1C,81#-T25-0.2C,81#-T25-0.33C,81#-T25-1C"
+    default_filename = ",".join(name_list)
     default_method = "Bayes"
     default_model = "DFN"
     parser.add_argument('--train', action='store_true', default=default_train, help='Train the model.')
@@ -697,7 +687,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     name = args.filename
     model_type = args.model
-    file_name = name.split(",")[0].split("-")[0] + "MO-Constraint" + f"-{model_type}-{dim}"
+    file_name = name_list[0].split("-")[0] + "MO-Constraint" + f"-{model_type}-{dim}"
     subdir_name = args.method
     wc_num = len(args.filename.split(","))
     if args.train:
