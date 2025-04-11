@@ -31,7 +31,7 @@ initial = {'Initial_concentration_in_negative_electrode', ...
 
 % LaTeX symbols for each parameter
 param_symbols = containers.Map();
-param_symbols('N_parallel') = '$N_{parallel}$';
+param_symbols('N_parallel') = '$N_{wind}$';
 param_symbols('electrode_height') = '$H_{elec}$';
 param_symbols('electrode_width') = '$W_{elec}$';
 param_symbols('Negative_electrode_thickness') = '$L_n$';

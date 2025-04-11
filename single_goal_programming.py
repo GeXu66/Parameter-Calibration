@@ -133,17 +133,22 @@ def pybamm_sim(param, min_voltage, max_voltage, discharge_cur, time_max, capacit
     Positive_electrode_active_material_volume_fraction = min_max_func(0.45, 0.6, param[5])
     Negative_electrode_active_material_volume_fraction = min_max_func(0.48, 0.62, param[6])
     Positive_electrode_porosity = min_max_func(0.32, 0.45, param[7])
-    Separator_porosity = min_max_func(0.4, 0.6, param[8])
+    Negative_electrode_porosity = min_max_func(0.32, 0.45, param[8])
+    Separator_porosity = min_max_func(0.4, 0.6, param[9])
 
-    Positive_electrode_diffusivity = min_max_func(1e-13, 1e-12, param[9])
-    Negative_particle_radius = min_max_func(2e-6, 5e-6, param[10])
-    Negative_electrode_conductivity = min_max_func(50.0, 150.0, param[11])
-    Positive_electrode_conductivity = min_max_func(30.0, 80.0, param[12])
-    Negative_electrode_Bruggeman_coefficient = min_max_func(1.2, 2.0, param[13])
+    Positive_electrode_diffusivity = min_max_func(1e-13, 1e-12, param[10])
+    Negative_electrode_diffusivity = min_max_func(1e-13, 1e-12, param[11])
+    Positive_particle_radius = min_max_func(1e-6, 4e-6, param[12])
+    Negative_particle_radius = min_max_func(2e-6, 5e-6, param[13])
+    Negative_electrode_conductivity = min_max_func(50.0, 150.0, param[14])
+    Positive_electrode_conductivity = min_max_func(30.0, 80.0, param[15])
+    Negative_electrode_Bruggeman_coefficient = min_max_func(1.2, 2.0, param[16])
+    Positive_electrode_Bruggeman_coefficient = min_max_func(1.2, 2.0, param[17])
 
-    Initial_concentration_in_positive_electrode = min_max_func(25000.0, 32000.0, param[14])
-    Initial_concentration_in_negative_electrode = min_max_func(4000.0, 6000.0, param[15])
-    Maximum_concentration_in_positive_electrode = min_max_func(45000.0, 58000.0, param[16])
+    Initial_concentration_in_positive_electrode = min_max_func(25000.0, 32000.0, param[18])
+    Initial_concentration_in_negative_electrode = min_max_func(4000.0, 6000.0, param[19])
+    Maximum_concentration_in_positive_electrode = min_max_func(45000.0, 58000.0, param[20])
+    Maximum_concentration_in_negative_electrode = min_max_func(25000.0, 35000.0, param[21])
 
     parameter_values = pybamm.ParameterValues("Prada2013")
     option = {"cell geometry": "arbitrary", "thermal": "lumped", "contact resistance": "false"}
@@ -177,19 +182,24 @@ def pybamm_sim(param, min_voltage, max_voltage, discharge_cur, time_max, capacit
         "Positive electrode active material volume fraction": Positive_electrode_active_material_volume_fraction,
         "Negative electrode active material volume fraction": Negative_electrode_active_material_volume_fraction,
         "Positive electrode porosity": Positive_electrode_porosity,
+        "Negative electrode porosity": Negative_electrode_porosity,
         "Separator porosity": Separator_porosity,
 
         # 传输特性参数
         "Positive electrode diffusivity [m2.s-1]": Positive_electrode_diffusivity,
+        "Negative electrode diffusivity [m2.s-1]": Negative_electrode_diffusivity,
+        "Positive particle radius [m]": Positive_particle_radius,
         "Negative particle radius [m]": Negative_particle_radius,
         "Negative electrode conductivity [S.m-1]": Negative_electrode_conductivity,
         "Positive electrode conductivity [S.m-1]": Positive_electrode_conductivity,
         "Negative electrode Bruggeman coefficient (electrolyte)": Negative_electrode_Bruggeman_coefficient,
+        "Positive electrode Bruggeman coefficient (electrolyte)": Positive_electrode_Bruggeman_coefficient,
 
         # 浓度参数
         "Initial concentration in positive electrode [mol.m-3]": Initial_concentration_in_positive_electrode,
         "Initial concentration in negative electrode [mol.m-3]": Initial_concentration_in_negative_electrode,
         "Maximum concentration in positive electrode [mol.m-3]": Maximum_concentration_in_positive_electrode,
+        "Maximum concentration in negative electrode [mol.m-3]": Maximum_concentration_in_negative_electrode,
 
     }
 
@@ -288,13 +298,13 @@ def eval_objective(x):
 
 def eval_c1(x):
     """低SOC段的约束条件: RMSE < 20mV"""
-    soc_range = (0.1, 0.3)
+    soc_range = (0.05, 0.3)
     return obj_func(x, soc_range) - 0.02  # 转换为约束形式 c1(x) <= 0
 
 
 def eval_c2(x):
     """高SOC段的约束条件: RMSE < 20mV"""
-    soc_range = (0.7, 0.9)
+    soc_range = (0.7, 0.95)
     return obj_func(x, soc_range) - 0.02  # 转换为约束形式 c2(x) <= 0
 
 
@@ -662,7 +672,7 @@ if __name__ == '__main__':
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     dtype = torch.double
     tkwargs = {"device": device, "dtype": dtype}
-    dim = 17
+    dim = 22
     lb = torch.zeros(dim, **tkwargs)
     ub = torch.ones(dim, **tkwargs)
     bounds = torch.stack([lb, ub])
